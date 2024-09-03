@@ -2,7 +2,7 @@ from flask import render_template,request,redirect,flash,url_for,session
 from werkzeug.security import generate_password_hash,check_password_hash
 from rateflix import app
 from rateflix.forms import Register,Login,Movie
-from rateflix.models import db,Member
+from rateflix.models import db,Member,Studio,Producer,Genre,Actor
 
 ##funcion to always retrive the user id
 def get_user_byid(id):
@@ -119,13 +119,17 @@ def user_page():
         return redirect('/user/login/')
     
 
-@app.route('/user/add_movie/')
+@app.route('/user/add_movie/', methods=['GET','POST'])
 def user_addmovie():
     data = session.get('member_id')
     movie = Movie()
+    producer = db.session.query(Producer).all()
+    studio = db.session.query(Studio).all()
+    genre = db.session.query(Genre).all()
+    actor = db.session.query(Actor).all()
     if data != None:
         user_session = get_user_byid(data)
-        return render_template('user/add_movie.html' ,user_session=user_session,movie=movie)
+        return render_template('user/add_movie.html' ,user_session=user_session,movie=movie,producer=producer,studio=studio,genre=genre,actor=actor)
     else:
         flash('You need to login to access this page')
         return redirect('/user/login/')

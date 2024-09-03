@@ -40,7 +40,7 @@ class Movie(db.Model):
     movie_description = db.Column(db.Text)
     movie_poster = db.Column(db.String(255))
     movie_trailer = db.Column(db.String(255))
-    movie_status = db.Column(db.Enum('pending', 'approved', name='movie_status_enum'), nullable=False, default='pending')
+    movie_status = db.Column(db.Enum('pending', 'approved'), nullable=False, default='pending')
     production_studio = db.Column(db.Integer, db.ForeignKey('studio.studio_id'))
 
     producer = db.relationship('Producer', back_populates='movies')

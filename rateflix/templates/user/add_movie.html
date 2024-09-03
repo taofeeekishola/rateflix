@@ -13,49 +13,61 @@
                 {% endif %}
             {% endwith %}
         
-        <form action="/user/add_movie/" method="post">
+        <form action="/user/add_movie/" method="post" novalidate>
             {{ movie.csrf_token }}
 
-            {{ movie.title(class="form-control mb-2", placeholder='Title') }}
+            {{ movie.title(class="form-control mb-3", placeholder='Title') }}
             {% if movie.title.errors %}
-                {% for error in lomoviegin.title.errors %}
+                {% for error in movie.title.errors %}
                     <p>{{ error }}</p>
                 {% endfor %}
             {% endif %}
 
             {{ movie.release_date.label }}
-            {{ movie.release_date(class="form-control mb-2") }}
+            {{ movie.release_date(class="form-control mb-3") }}
             {% if movie.title.errors %}
-                {% for error in lomoviegin.title.errors %}
+                {% for error in release_date.title.errors %}
                     <p>{{ error }}</p>
                 {% endfor %}
             {% endif %}
 
             {{ movie.description.label }}
-            {{ movie.description(class="form-control mb-2") }}
+            {{ movie.description(class="form-control mb-3") }}
             {% if movie.title.errors %}
-                {% for error in lomoviegin.title.errors %}
+                {% for error in description.title.errors %}
                     <p>{{ error }}</p>
                 {% endfor %}
             {% endif %}
+
+        
+            <label for="actor">Actor</label>
+            <select name="actor" id="actor" class="form-select mb-3">
+                {% for a in actor %}
+                    <option value="{{ a.actor_id }}"> {{ a.actor_name }} </option>
+                {% endfor %}
+            </select>
+
 
             {{ movie.producer.label }}
-            {{ movie.producer(class="form-control mb-2") }}
-            {% if movie.title.errors %}
-                {% for error in lomoviegin.title.errors %}
-                    <p>{{ error }}</p>
+            <select name="producer" id="producer" class="form-select mb-3">
+                {% for p in producer %}
+                    <option value="{{ p.producer_id }}"> {{ p.producer_name }} </option>
                 {% endfor %}
-            {% endif %}
+            </select>
 
             {{ movie.studio.label }}
-            {{ movie.studio(class="form-control mb-2") }}
-            {% if movie.title.errors %}
-                {% for error in lomoviegin.title.errors %}
-                    <p>{{ error }}</p>
+            <select name="studio" id="studio" class="form-select mb-3">
+                {% for s in studio %}
+                    <option value="{{ s.studio_id }}"> {{ s.studio_name }} </option>
                 {% endfor %}
-            {% endif %}
+            </select>
 
-            {{ movie.submit(class="btn btn-primary") }}
+            {% for g in genre %}
+                <input type="checkbox" name="genre" id="" value="{{ g.genre_name }}" class="form-check-input mb-2" >
+                <label> {{ g.genre_name }}</label>
+            {% endfor %}
+
+            {{ movie.submit(class_="btn btn-primary mt-3 d-block") }}
         </form>
         </div>
        
