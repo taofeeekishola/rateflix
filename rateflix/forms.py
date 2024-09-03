@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField,PasswordField,SubmitField
+from wtforms import StringField,PasswordField,SubmitField,DateField,TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo
 
 
@@ -17,3 +17,12 @@ class Register(FlaskForm):
     password = PasswordField('Password',validators=[DataRequired(message='Please enter your password')])
     con_password = PasswordField('Confirm Password',validators=[DataRequired(message='Please enter your password'), EqualTo('password',message='Password must be the same')])
     signup = SubmitField('Sign Up')
+
+class Movie(FlaskForm):
+    title = StringField('Title',validators=[DataRequired(message='Enter the title of the movie')])
+    release_date = DateField('Release Date', format='%Y-%m-%d')
+    description = TextAreaField('Plot Summary')
+    producer = StringField('Producer')
+    studio = StringField('Production Studio',validators=[DataRequired(message="Studio missing")])
+    submit = SubmitField('Submit')
+    

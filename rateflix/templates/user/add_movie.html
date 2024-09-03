@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row mt-5">
+        <div class="col-md-6 offset-3">
+            <h1>Add a Movie</h1>
+            
+             {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="alert alert-danger"> {{ message }} </p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        
+        <form action="/user/add_movie/" method="post">
+            {{ movie.csrf_token }}
+
+            {{ movie.title(class="form-control mb-2", placeholder='Title') }}
+            {% if movie.title.errors %}
+                {% for error in lomoviegin.title.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+
+            {{ movie.release_date.label }}
+            {{ movie.release_date(class="form-control mb-2") }}
+            {% if movie.title.errors %}
+                {% for error in lomoviegin.title.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+
+            {{ movie.description.label }}
+            {{ movie.description(class="form-control mb-2") }}
+            {% if movie.title.errors %}
+                {% for error in lomoviegin.title.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+
+            {{ movie.producer.label }}
+            {{ movie.producer(class="form-control mb-2") }}
+            {% if movie.title.errors %}
+                {% for error in lomoviegin.title.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+
+            {{ movie.studio.label }}
+            {{ movie.studio(class="form-control mb-2") }}
+            {% if movie.title.errors %}
+                {% for error in lomoviegin.title.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+
+            {{ movie.submit(class="btn btn-primary") }}
+        </form>
+        </div>
+       
+    </div>
+{% endblock content %}

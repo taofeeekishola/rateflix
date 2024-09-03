@@ -1,7 +1,7 @@
 from flask import render_template,request,redirect,flash,url_for,session
 from werkzeug.security import generate_password_hash,check_password_hash
 from rateflix import app
-from rateflix.forms import Register,Login
+from rateflix.forms import Register,Login,Movie
 from rateflix.models import db,Member
 
 ##funcion to always retrive the user id
@@ -83,7 +83,7 @@ def user_login():
 
         data = db.session.query(Member).filter(Member.member_email == email).first()
         if data:
-            hashed_password = data.password
+            hashed_password = data.member_password
             pass_check = check_password_hash(hashed_password,password)
             if pass_check:
                 session['member_id'] = data.member_id
@@ -114,6 +114,18 @@ def user_page():
     if data != None:
         user_session = get_user_byid(data)
         return render_template('user/profile.html' ,user_session=user_session)
+    else:
+        flash('You need to login to access this page')
+        return redirect('/user/login/')
+    
+
+@app.route('/user/add_movie/')
+def user_addmovie():
+    data = session.get('member_id')
+    movie = Movie()
+    if data != None:
+        user_session = get_user_byid(data)
+        return render_template('user/add_movie.html' ,user_session=user_session,movie=movie)
     else:
         flash('You need to login to access this page')
         return redirect('/user/login/')

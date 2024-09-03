@@ -41,7 +41,7 @@ class Movie(db.Model):
     movie_poster = db.Column(db.String(255))
     movie_trailer = db.Column(db.String(255))
     movie_status = db.Column(db.Enum('pending', 'approved', name='movie_status_enum'), nullable=False, default='pending')
-    production_studio = db.Column(db.String(255))
+    production_studio = db.Column(db.Integer, db.ForeignKey('studio.studio_id'))
 
     producer = db.relationship('Producer', back_populates='movies')
     genres = db.relationship('MovieGenre', back_populates='movie')
@@ -183,3 +183,9 @@ class Admin(db.Model):
     admin_email = db.Column(db.String(255), unique=True, nullable=False)
     admin_password = db.Column(db.String(255), nullable=False)
     admin_lastloggedin = db.Column(db.DateTime)
+
+class Studio(db.Model):
+    studio_id = db.Column(db.Integer, primary_key=True)
+    studio_name = db.Column(db.String(255), nullable=False)
+
+    # movies = db.relationship('MovieGenre', back_populates='genre')
