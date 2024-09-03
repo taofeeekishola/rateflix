@@ -1,0 +1,48 @@
+@font-face {
+    font-family: yuji;
+    src: url('fonts/Jost-Regular.woff') format('woff');
+}
+
+body{
+    font-family: yuji, sans-serif;
+}
+.c-item img{
+    filter:brightness(0.6);
+}
+.c-item a{
+    text-decoration: none;
+    color: white;
+}
+.sub-heading{
+    border-left: 3px solid brown;
+}
+.card-custom a{
+    text-decoration: none;
+    color:black;
+}
+.card-custom a p{
+    font-size:13px;
+}
+.review{
+    
+    width: 100px;
+    height:100px;
+}
+
+.coming-soon{
+    margin-top: 20px;
+}
+.cast div{
+    height: 100px;
+    width:100px;
+}
+
+/*this can be removed*/
+.custom-btn {
+  height: 30px; /* Set a specific height for the buttons */
+  padding: 0.25rem 0.5rem; /* Adjust padding as needed */
+  font-size: 0.875rem; /* Ensure the text fits well */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

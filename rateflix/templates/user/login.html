@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="row mt-5">
+        <div class="col-md-6 offset-3">
+            <h1>LOGIN</h1>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="alert alert-danger"> {{ message }} </p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form action="/user/login/" method="post" novalidate>
+                {{ login.csrf_token }}
+                
+                {{ login.email(class="form-control mb-2", placeholder='Email') }}
+                    {% if login.email.errors %}
+                        {% for error in login.email.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                                                   
+                {{ login.password(class="form-control mb-2",placeholder='Password') }}
+                    {% if login.password.errors %}
+                        {% for error in login.password.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+
+                {{ login.login(class="btn btn-primary") }}
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/ico" href="/static/images/favicon-32x32.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/fa/css/all.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>RateFlix</title>
+</head>
+<body>
+    <div class="container">
+
+        <!--Navbar-->
+        <div class="row">
+            <div class="col">
+                <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                    <div class="container-fluid">
+                        <a class="navbar-brand text-primary" href="{{ url_for('home') }}">RateFlix</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="#">Movies</a>
+                                </li>
+                                <li class="nav-item">
+                                <a class="nav-link" href="#">TV Shows</a>
+                                </li>
+                                <li class="nav-item">
+                                <a class="nav-link" href="#">Awards & Events</a>
+                                </li>
+                            </ul>
+                             <form class="d-flex me-5" role="search">
+                                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                                    <button class="btn btn-outline-primary" type="submit">Search</button>
+                                </form>
+                            <div class="d-flex">
+                                {% if session.get('member_id') != None %}
+                                <div class="btn-group me-2">
+                                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {{ user_session.member_username  }}
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><button class="dropdown-item" type="button">Profile</button></li>
+                                        <li><button class="dropdown-item" type="button">Account</button></li>
+                                        <a href="/user/logout/"><li><button class="dropdown-item" type="button">Logout</button></li></a>
+                                    </ul>
+                                </div>
+                                {% endif %}
+                                
+                                {% if session.get('member_id') == None %}
+                                <a href="/user/login/"><button class="btn btn-primary me-2" type="button">Login</button></a>
+                                <a href="/user/signup/"><button class="btn btn-outline-primary me-2" type="button" >Sign Up</button></a>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        {% block content %}
+
+        {% endblock %}
+
+        <!--Footer-->
+        <div class="row mx-2 mt-5 bg-dark rounded">
+            <div class="col-md-3 mt-5 text-light d-flex flex-column align-items-center ">
+                <h5 class="mt-2 ">Privacy Policy</h5>
+               
+            </div>
+            <div class="col-md-3 mt-5 text-light d-flex flex-column align-items-center">
+                <h5 class="mt-2 mx-4">Legal</h5>
+                
+            </div>
+            <div class="col-md-3 mt-5 text-light d-flex flex-column align-items-center">
+                <h5 class="mt-2 mx-4">Cookies Notice</h5>
+               
+            </div>
+            <div class="col-md-3 mt-5 text-light ">
+                <h5 class="mt-2">Socials</h5>
+                <a href="#"><i class="fa-brands fa-facebook text-white"></i></a>
+                <a href="#"><i class="fa-brands fa-x-twitter text-white"></i></a>
+                <a href="#"><i class="fa-brands fa-instagram text-white"></i></i></a>
+                <a href="#"><i class="fa-brands fa-youtube text-white"></i></i></a>
+                <a href="#"><i class="fa-brands fa-linkedin text-white"></i></i></a>
+            </div>
+            <hr class="text-light">
+
+            <div class="row text-light text-center">
+                <div class="col-md-12">
+                    <p>&#169; 2021 Copywrite 2024</p>
+                </div>
+            </div>
+        </div>
+
+       
+    </div>
+    <script src="/static/jquery.js"></script>
+    <script src="/static/scripts.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.bundle.js" type="text/javascript"></script>
+    {% block scripts %}
+
+    {% endblock %}
+</body>
+</html>

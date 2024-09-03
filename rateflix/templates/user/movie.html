@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/ico" href="images/favicon-32x32.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="fa/css/all.css">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="style.css">
+    <title>A Quiet Place</title>
+</head>
+<body>
+    <div class="container">
+
+        <!--Navbar-->
+        <div class="row">
+            <div class="col">
+                <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                    <div class="container-fluid">
+                        <a class="navbar-brand text-primary" href="index.html">RateFlix</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="#">Movies</a>
+                                </li>
+                                <li class="nav-item">
+                                <a class="nav-link" href="#">TV Shows</a>
+                                </li>
+                                <li class="nav-item">
+                                <a class="nav-link" href="#">Awards & Events</a>
+                                </li>
+                            </ul>
+                            <div class="d-flex">
+                               <div class="btn-group me-2">
+                                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Taofeek
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><button class="dropdown-item" type="button">Profile</button></li>
+                                        <li><button class="dropdown-item" type="button">Account</button></li>
+                                        <li><button class="dropdown-item" type="button">Logout</button></li>
+                                    </ul>
+                                </div>
+                                <form class="d-flex" role="search">
+                                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                                    <button class="btn btn-outline-primary" type="submit">Search</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <!--Movie name-->
+       <div class="row mt-4">
+            <!-- Movie Details -->
+            <div class="col-md-8">
+                <h1 class="h3 sub-heading">A Quiet Place: Day One</h1>
+                <div class="d-flex mb-2">
+                    <p class="mb-1 me-3"><strong>Year:</strong> 2024</p>
+                    <p class="mb-1 me-3"><strong>Rating:</strong> PG-13</p>
+                    <p class="mb-1"><strong>Duration:</strong> 1h 39m</p>
+                </div>
+            </div>
+            <!-- Ratings and Popularity -->
+            <div class="col-md-4">
+                <div class="d-flex flex-row justify-content-between">
+                    <p class="mb-1"><strong>Ratflex Rating:</strong> 7/10<i class="fa-solid fa-star"></i></p>
+                    <p class="mb-1"><strong>Your Rating:</strong> <i class="fa-solid fa-star"></i></p>
+                   <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+                </div>
+            </div>
+        </div>
+
+        <!--Movie Poster & trailer-->
+        <div class="row">
+            <div class="col-md-3 d-flex align-items-stretch">
+                <img src="Images/quietplace.jpg" alt="A Quiet Place" class="img-fluid w-100 h-100" style="object-fit: cover;">
+            </div>
+            <div class="col-md-9 d-flex align-items-stretch">
+                <video controls poster="Images/thumnail.jpg" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                    <source src="media/A Quiet Place- Day One - Official Trailer 2 (2024 Movie) - Lupita Nyong'o, Joseph Quinn.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="row mt-2">
+                <div class="col-sm-6">
+                    <button class="btn btn-outline-primary btn-sm rounded-pill">Drama</button>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill">Horror</button>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill">Sci-Fi</button>
+                </div>
+            </div>
+        </div>
+
+        <!--Movie info-->
+        <div class="row mt-2">
+            <div class="col-md-8">
+                <p>A young woman named Sam finds herself trapped in New York City during the early stages of an invasion by alien creatures with ultra-sensitive hearing.</p>
+                <hr>
+                <p><strong>Director</strong> Michael Sarnoski</p>
+                <hr>
+                <p><strong>Writers</strong> Michael Sarnoski &nbsp;John Krasinski &nbsp; Bryan Woods</p>
+            </div>
+
+            <div class="col-md-4">
+                <h4>Where to Watch</h4>
+                <p>Still in theaters <i class="fa-solid fa-film"></i></p>
+            </div>
+        </div>
+
+        <!--Review heading-->
+        <div class="row">
+            <div class="col-md-6 mt-5">
+                <h3 class="sub-heading">Reviews</h3>
+            </div>
+        </div>
+
+        <!--Some reviews-->
+        <div class="row">
+            <div class="col-md-4">
+                <p>Bossmansouth</p>
+                <p>A gripping prequel that dives into the origins of the terrifying silence. Tense from start to finish.</p>
+                <p>6/10 <i class="fa-solid fa-star"></i></p>
+            </div>
+            <div class="col-md-4">
+                <p>Bossmannorth</p>
+                <p>Solid addition to the franchise with intense moments and strong performances. A must-watch for fans. </p>
+                <p>8/10 <i class="fa-solid fa-star"></i></p>
+            </div>
+            <div class="col-md-4">
+                <p>Bossmaneast</p>
+                <p>A Quiet Place: Day One offers a decent backstory to the franchise, but it lacks the novelty of the original. The suspense is there, but it feels a bit formulaic. Overall, a solid horror film but not groundbreaking. </p>
+                <p>4/10 <i class="fa-solid fa-star"></i></p>
+            </div>
+        </div>
+
+        <!--Write your own review heading-->
+         <div class="row">
+            <div class="col-md-6 mt-5">
+                <h3 class="sub-heading">My Review & Rating</h3>
+            </div>
+        </div>
+
+         <!--Write your own review-->
+         <div class="row">
+            <div class="col-md-9">
+                <input type="text" class="form-control movieComment" placeholder="Comment">
+                <button class="btn btn-primary text-end mt-2 comment">Comment</button>
+                <p class="mycomment mt-2"></p>
+            </div>
+            
+            <div class="col-md-3">
+            <i class="fa-solid fa-star"></i>
+         </div>
+         </div>
+
+         <!--Cast heading-->
+          <div class="row">
+            <div class="col-md-6 mt-5">
+                <h3 class="sub-heading">Cast</h3>
+            </div>
+        </div>
+
+        <!--Cast-->
+        <div class="row cast">
+            <div class="col-md-3">
+                <img src="Images/cast/lupita.jpg" alt="lupita" class="img-fluid">
+                <P>Lupita Nyong'o</P>
+            </div>
+            <div class="col-md-3">
+                 <img src="Images/cast/joseph.jpg" alt="joseph" class="img-fluid">
+                  <P>Joseph Quinn</P>
+            </div>
+            <div class="col-md-3">
+                <img src="Images/cast/alex.jpg" alt="alex" class="img-fluid">
+                 <P>Alex Wolff</P>
+            </div>
+            <div class="col-md-3">
+                <img src="Images/cast/Djimon.jpg" alt="djimon" class="img-fluid">
+                 <P>Djimon Hounsou</P>
+            </div>
+        </div>
+         
+        <!--More like this heading-->
+          <div class="row mt-5">
+            <div class="col-md-6 mt-5">
+                <h3 class="sub-heading">More like this</h3>
+            </div>
+        </div>
+
+        <!--More like this-->
+        <div class="row">
+            <div class="col-6 col-md-4 col-lg-2 mb-4">
+          <div class="card card-custom">
+            <a href="#"><img src="Images/hodg.jpg" class="card-img-top" alt="House of the dragons"></a>
+            <div class="card-body">
+              <a href="#"><p class="card-title mb-2">House Of The Dragon</p></a>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <p class="card-text mb-0">10/10<i class="fa-solid fa-star"></i></p>
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <div class="d-flex flex-column align-items-center">
+                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
+                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-2 mb-4">
+          <div class="card card-custom">
+            <a href="#"><img src="Images/inside.jpg" class="card-img-top" alt="Inside out"></a>
+            <div class="card-body">
+              <a href="#"><p class="card-title mb-2">Inside Out 2</p></a>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <div class="d-flex flex-column align-items-center">
+                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
+                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-2 mb-4">
+          <div class="card card-custom">
+            <a href="#"><img src="Images/aco.jpg" class="card-img-top" alt="The Acolyte"></a>
+            <div class="card-body">
+              <a href="#"><p class="card-title mb-2">The Acolyte</p></a>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <div class="d-flex flex-column align-items-center">
+                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
+                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-2 mb-4">
+          <div class="card card-custom">
+            <a href="#"><img src="Images/viking2.jpg" class="card-img-top" alt="Vikings"></a>
+            <div class="card-body">
+              <a href="#"><p class="card-title mb-2">Vikings</p></a>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <p class="card-text mb-0">8/10<i class="fa-solid fa-star"></i></p>
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <div class="d-flex flex-column align-items-center">
+                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
+                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-6 col-md-4 col-lg-2 mb-4">
+          <div class="card card-custom">
+            <a href="#"><img src="Images/office.jpg" class="card-img-top" alt="The Office"></a>
+            <div class="card-body">
+              <a href="#"><p class="card-title mb-2">The Office</p></a>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <p class="card-text mb-0">8/10<i class="fa-solid fa-star"></i></p>
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <div class="d-flex flex-column align-items-center">
+                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
+                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-2 mb-4">
+          <div class="card card-custom">
+            <a href="#"><img src="Images/dispicableme.jpg" class="card-img-top" alt="Despicable Me 4"></a>
+            <div class="card-body">
+              <a href="#"><p class="card-title mb-2">Despicable Me 4</p></a>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <p class="card-text mb-0">7/10<i class="fa-solid fa-star"></i></p>
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <div class="d-flex flex-column align-items-center">
+                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
+                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        </div>
+
+
+        <!--Footer-->
+        <div class="row mx-2 mt-5 bg-dark rounded">
+            <div class="col-md-3 mt-5 text-light d-flex flex-column align-items-center ">
+                <h5 class="mt-2 ">Privacy Policy</h5>
+               
+            </div>
+            <div class="col-md-3 mt-5 text-light d-flex flex-column align-items-center">
+                <h5 class="mt-2 mx-4">Legal</h5>
+                
+            </div>
+            <div class="col-md-3 mt-5 text-light d-flex flex-column align-items-center">
+                <h5 class="mt-2 mx-4">Cookies Notice</h5>
+               
+            </div>
+            <div class="col-md-3 mt-5 text-light ">
+                <h5 class="mt-2">Socials</h5>
+                <a href="#"><i class="fa-brands fa-facebook text-white"></i></a>
+                <a href="#"><i class="fa-brands fa-x-twitter text-white"></i></a>
+                <a href="#"><i class="fa-brands fa-instagram text-white"></i></i></a>
+                <a href="#"><i class="fa-brands fa-youtube text-white"></i></i></a>
+                <a href="#"><i class="fa-brands fa-linkedin text-white"></i></i></a>
+            </div>
+            <hr class="text-light">
+
+            <div class="row text-light text-center">
+                <div class="col-md-12">
+                    <p>&#169; 2021 Copywrite 2024</p>
+                </div>
+            </div>
+        </div>
+
+       
+    </div>
+
+    <script src="jquery.js"></script>
+    <script src="scripts.js"></script>
+     <script src="bootstrap/js/bootstrap.bundle.js" type="text/javascript"></script>
+</body>
+</html>

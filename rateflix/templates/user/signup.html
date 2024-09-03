@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="row mt-5">
+        <div class="col-md-6 offset-3">
+            <h2>CREATE AN ACCOUNT</h2>
+            <form action="{{ url_for('user_signup') }}" method="post" novalidate>
+                {{ signup.csrf_token }}
+
+                {{ signup.first_name(class='form-control mb-2', placeholder='First Name') }}
+                {% if signup.first_name.errors %}
+                    {% for error in signup.first_name.errors %}
+                        <p> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+
+                {{ signup.last_name(class='form-control mb-2', placeholder='Last Name') }}
+                {% if signup.last_name.errors %}
+                    {% for error in signup.last_name.errors %}
+                        <p> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="d-flex align-items-center mb-2">
+                    {{ signup.user_name(class='form-control me-2', placeholder='Username', id='username') }}
+                    <span id="userverf"></span>
+                </div>
+                {% if signup.user_name.errors %}
+                    {% for error in signup.user_name.errors %}
+                        <p class="text-danger"> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+                
+                 <div class="d-flex align-items-center mb-2"></div>
+                {{ signup.email(class='form-control mb-2', placeholder='Email' , id='email') }}
+                <span id="emailval"></span>
+                {% if signup.email.errors %}
+                    {% for error in signup.email.errors %}
+                        <p> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+
+                {{ signup.password(class='form-control mb-2', placeholder='Password') }}
+                {% if signup.password.errors %}
+                    {% for error in signup.password.errors %}
+                        <p> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+
+                {{ signup.con_password(class='form-control mb-2', placeholder='Confirm Password') }}
+                {% if signup.con_password.errors %}
+                    {% for error in signup.con_password.errors %}
+                        <p> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+
+                {{ signup.signup(class='btn btn-primary') }}
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function(){
+            //checking is the username is avaliable or taken
+            $('#username').change(function(){
+                var username = $(this).val()
+                var data2send = 'username='+username
+                $('#userverf').load('/user/valusername/',data2send)
+            });
+
+            //checking if the email is avaliable or taken
+            $('#email').change(function(){
+                var email = $(this).val()
+                var data2send = 'email='+email
+                $('#emailval').load('/user/emailval/',data2send)
+            });
+        });
+    </script>
+{% endblock %}
