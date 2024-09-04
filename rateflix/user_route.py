@@ -1,8 +1,8 @@
 from flask import render_template,request,redirect,flash,url_for,session
 from werkzeug.security import generate_password_hash,check_password_hash
 from rateflix import app
-from rateflix.forms import Register,Login,Movie
-from rateflix.models import db,Member,Studio,Producer,Genre,Actor
+from rateflix.forms import Register,Login,MovieForm
+from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre
 
 ##funcion to always retrive the user id
 def get_user_byid(id):
@@ -122,13 +122,46 @@ def user_page():
 @app.route('/user/add_movie/', methods=['GET','POST'])
 def user_addmovie():
     data = session.get('member_id')
-    movie = Movie()
+    movie = MovieForm()
     producer = db.session.query(Producer).all()
     studio = db.session.query(Studio).all()
     genre = db.session.query(Genre).all()
     actor = db.session.query(Actor).all()
     if data != None:
         user_session = get_user_byid(data)
+
+        if movie.validate_on_submit():
+            title = request.form.get('title')
+            release_date= request.form.get('release_date')
+            summary = request.form.get('description')
+            movie_actor = request.form.get('actor')
+            movie_producer=request.form.get('producer')
+            movie_studio = request.form.get('studio')
+            movie_genre = request.form.getlist('genre')
+
+            movie_details = Movie(movie_title=title,producer_id=movie_producer,movie_release_date=release_date,movie_description=summary,production_studio=movie_studio)
+
+            db.session.add(movie_details)
+            db.session.commit()
+
+            movie_id = movie_details.movie_id	
+
+            if movie_actor:  # Ensure there is an actor ID provided
+                movie_actor_data = MovieActor(movie_id=movie_id, actor_id=movie_actor)
+                db.session.add(movie_actor_data)
+                db.session.commit()
+
+            if movie_genre:
+                for g in movie_genre:
+                    movie_genre_data = MovieGenre(movie_id=movie_id,genre_id=int(g))
+                    db.session.add(movie_genre_data)
+
+            db.session.commit()
+
+            flash('Movie has been succesfully added')
+            return redirect('/user/add_movie/')
+
+
         return render_template('user/add_movie.html' ,user_session=user_session,movie=movie,producer=producer,studio=studio,genre=genre,actor=actor)
     else:
         flash('You need to login to access this page')

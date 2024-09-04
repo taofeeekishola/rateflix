@@ -39,7 +39,6 @@
                 {% endfor %}
             {% endif %}
 
-        
             <label for="actor">Actor</label>
             <select name="actor" id="actor" class="form-select mb-3">
                 {% for a in actor %}
@@ -63,7 +62,7 @@
             </select>
 
             {% for g in genre %}
-                <input type="checkbox" name="genre" id="" value="{{ g.genre_name }}" class="form-check-input mb-2" >
+                <input type="checkbox" name="genre"  value="{{ g.genre_id }}" class="form-check-input mb-2" >
                 <label> {{ g.genre_name }}</label>
             {% endfor %}
 
