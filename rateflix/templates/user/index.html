@@ -30,110 +30,34 @@
         </div>
 
         <!--Popular in theater-->
-       <div class="row">
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top" alt="Despicable Me 4"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Despicable Me 4</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">
-                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"> <i class="fa-solid fa-star"></i></i>
-                </p>
-              </div>
-              <!-- Align the buttons side by side with equal width and reduced height -->
-              <div class="d-flex justify-content-center align-items-center">
-                <a href="#" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
      
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/badboys.jpg" class="card-img-top" alt="Badboys"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Bad Boys </p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"> <i class="fa-solid fa-star"></i></i></p>
-              </div>
-              <div class="d-flex justify-content-center align-items-center">
-                <a href="#" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/fly.jpg" class="card-img-top" alt="Fly me to the moon"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Fly Me To The Moon</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">7/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex justify-content-center align-items-center">
-                <a href="#" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
+       <div class="row">
+        {% if movies %}
+          {% for movie in movies %}
+            <div class="col-6 col-md-4 col-lg-2 mb-4">
+              <div class="card card-custom">
+                {% if movie.movie_poster == "" or movie.movie_poster == None %}
+                  <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top" alt="Movie Poster"></a>
+                {% else %}
+                  <a href="/movie/info/{{ movie.movie_id }}"><img src="/static/uploads/poster/{{ movie.movie_poster }}" class="card-img-top" alt="{{ movie.movie_poster }}"></a>
+                {% endif %}
+                <div class="card-body">
+                  <a href="/movie/info/{{ movie.movie_id }}"><p class="card-title mb-2">{{ movie.movie_title }}</p></a>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <p class="card-text mb-0">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"></i> <i class="fa-solid fa-star"> <i class="fa-solid fa-star"></i></i>
+                    </p>
+                  </div>
+                  <!-- Align the buttons side by side with equal width and reduced height -->
+                  <div class="d-flex justify-content-center align-items-center">
+                    <a href="/movie/info/{{ movie.movie_id }}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
+                    <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/inside.jpg" class="card-img-top" alt="Inside out"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Inside Out 2</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex justify-content-center align-items-center">
-                <a href="#" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/longlegs.jpg" class="card-img-top" alt="Longlegs"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Longlegs</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">4/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex justify-content-center align-items-center">
-                <a href="#" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="movie.html"><img src="/static/Images/quietplace.jpg" class="card-img-top" alt="A quiet Place day 1"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">A Quiet Place Day One</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">7/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex justify-content-center align-items-center">
-                <a href="movie.html" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+         {% endfor %}
+        {% endif %}
         </div>
 
       

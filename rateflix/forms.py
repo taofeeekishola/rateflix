@@ -26,4 +26,7 @@ class MovieForm(FlaskForm):
     producer = StringField('Producer')
     studio = StringField('Production Studio',validators=[DataRequired(message="Studio missing")])
     submit = SubmitField('Submit')
-    
+
+class Review(FlaskForm):
+    review = TextAreaField("Review")
+    submit = SubmitField('Submit')

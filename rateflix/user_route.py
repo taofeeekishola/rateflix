@@ -1,7 +1,7 @@
 from flask import render_template,request,redirect,flash,url_for,session
 from werkzeug.security import generate_password_hash,check_password_hash
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm
+from rateflix.forms import Register,Login,MovieForm,Review
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre
 
 ##funcion to always retrive the user id
@@ -11,6 +11,7 @@ def get_user_byid(id):
 
 @app.route('/')
 def home():
+    movies = Movie.query.limit(6)
     ## this checks if the session is empty and allows us to use it to create a database object and access the data in the home page
     data = session.get('member_id')
     if data != None:
@@ -18,7 +19,7 @@ def home():
     else:
         user_session = None
 
-    return render_template('user/index.html' ,user_session=user_session)
+    return render_template('user/index.html' ,user_session=user_session,movies=movies)
 
 ##this checks if the username already exists in the database and displays the options using ajax
 @app.route('/user/valusername/')
@@ -118,7 +119,7 @@ def user_page():
         flash('You need to login to access this page')
         return redirect('/user/login/')
     
-
+## the route users use to add movies to the database
 @app.route('/user/add_movie/', methods=['GET','POST'])
 def user_addmovie():
     data = session.get('member_id')
@@ -166,6 +167,28 @@ def user_addmovie():
     else:
         flash('You need to login to access this page')
         return redirect('/user/login/')
+    
+
+## this route will have information about the movie
+@app.route('/movie/info/<int:id>',methods=['GET','POST'])
+def movie_info(id):
+    movies = Movie.query.get(id)
+    actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
+    genres = MovieGenre.query.filter(MovieGenre.movie_genre_id == id).all()
+    
+    ##user review form
+    review = Review()
+
+    data = session.get('member_id')
+    if data != None:
+        user_session = get_user_byid(data)
+
+        if review.validate_on_submit():
+            pass
+    else:
+        user_session = None
+
+    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review)
 
     
 
