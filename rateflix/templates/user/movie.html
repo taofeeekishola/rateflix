@@ -31,7 +31,7 @@
               {% endif %}
             </div>
             <div class="col-md-9 d-flex align-items-stretch">
-              {% if movies.movie_trailer == "" or movies_trailer == None %}
+              {% if movies.movie_trailer == "" or movies.movie_trailer == None %}
                 <video controls poster="/static/Images/thumnail.jpg" class="img-fluid w-100 h-100" style="object-fit: cover;">
                     <source src="/static/media/A Quiet Place- Day One - Official Trailer 2 (2024 Movie) - Lupita Nyong'o, Joseph Quinn.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -219,14 +219,26 @@
          <!--Write your own review-->
          <div class="row">
             <div class="col-md-9">
-              <form action="">
+              <form  method="post" >
+
                 {{ review.csrf_token }}
 
                 {{ review.review(class='form-control mb-2', placeholder='My Review' )}}
-                {{ review.submit(class='btn btn-primary') }}
+                {{ review.submit_review(class='btn btn-primary') }}
               </form>
             </div>
          </div>
 
-
+         <!--all the comments-->
+         <div class="row mt-5">
+            <div class="col-md-12">
+              {% if all_reviews %}
+                {% for reviews in all_reviews %}
+                  <p> {{ reviews.review_content }} {{ reviews.review_date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                {% endfor %}
+              {% else %}
+                <p class="alert alert-primary"> No Reviews Avaliable </p>
+              {% endif %}
+            </div>
+         </div>
 {% endblock %}

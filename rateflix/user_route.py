@@ -1,8 +1,9 @@
 from flask import render_template,request,redirect,flash,url_for,session
 from werkzeug.security import generate_password_hash,check_password_hash
+import timeago
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm,Review
-from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre
+from rateflix.forms import Register,Login,MovieForm,MovieReview
+from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review
 
 ##funcion to always retrive the user id
 def get_user_byid(id):
@@ -175,20 +176,31 @@ def movie_info(id):
     movies = Movie.query.get(id)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     genres = MovieGenre.query.filter(MovieGenre.movie_genre_id == id).all()
-    
+
     ##user review form
-    review = Review()
+    review = MovieReview()
 
     data = session.get('member_id')
     if data != None:
         user_session = get_user_byid(data)
 
         if review.validate_on_submit():
-            pass
+
+            print('Form is validating')
+            review_content  = request.form.get('review')
+            user_review = Review(member_id=data,movie_id=id,review_content=review_content )
+
+            db.session.add(user_review)
+            db.session.commit()
+
+            # all_reviews = db.session.query(Review).all()
+
+            return redirect(url_for('movie_info', id=id))
     else:
         user_session = None
+    all_reviews = db.session.query(Review).filter(Review.movie_id == id).all()
 
-    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review)
+    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews)
 
     
 
