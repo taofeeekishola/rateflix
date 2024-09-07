@@ -16,7 +16,7 @@
               <div class="d-flex flex-row justify-content-between">
                   <p class="mb-1"><strong>Ratflex Rating:</strong> 7/10 <i class="fa-solid fa-star"></i></p>
                   <p class="mb-1"><strong>Your Rating:</strong>
-                      <i class="fa-solid fa-star myrate"  id="submit_star_1" data-rating="1" ></i>
+                      <i class="fa-solid fa-star myrate" id="submit_star_1" data-rating="1" ></i>
                       <i class="fa-solid fa-star myrate" id="submit_star_2" data-rating="2"></i>
                       <i class="fa-solid fa-star myrate" id="submit_star_3" data-rating="3"></i>
                       <i class="fa-solid fa-star myrate" id="submit_star_4" data-rating="4"></i>
@@ -287,9 +287,9 @@
               });
 
               $('.myrate').mouseleave(function() {
-                  // Assuming default color is set to empty or a specific color, such as black
-                  var defaultColor = ''; // Set to '' or any default color you want
-                  var rating = $(this).data('rating'); // Use the same rating logic if needed
+                  
+                  var defaultColor = ''; 
+                  var rating = $(this).data('rating'); 
 
                   for (var count = 0; count <= rating; count++) {
                       $('#submit_star_' + count).css('color', defaultColor);

@@ -1,0 +1,50 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Movies</h1>
+                    
+                   <table class="table d-inline">
+                        <thead>
+                            <tr>
+                                <td>S/N</td>
+                                <td>Title</td>
+                                <td>Description</td>
+                                <td>Release Date</td>
+                                <td>Genres</td>
+                                <td>Producer</td>
+                                <td>Studio</td>
+                                <td>Status</td>
+                                <td>Activity</td>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if movies %}
+                                {% for movie in movies %}
+                            <tr>
+                                <td> {{ loop.index }} </td>
+                                <td>{{ movie.movie_title }}</td>
+                                <td>{{ movie.movie_description }}</td>
+                                <td>{{ movie.movie_release_date }}</td>
+                                <td>erer</td>
+                                <td>bfgbg</td>
+                                <td>
+                                    fbfdb
+                                </td>
+                                <td>
+                                    <button class="btn btn-warning">Pending</button>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary">Update</button>
+                                    <button class="btn btn-danger">Delete</button>
+                                </td>
+                                
+                            </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                   </table>
+                   
+                </div>
+{% endblock %}

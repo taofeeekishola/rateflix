@@ -1,206 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/ico" href="images/favicon-32x32.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="fa/css/all.css">
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
-    <link rel="stylesheet" href="style.css">
-    <title>Admin RateFlix</title>
-</head>
-<body>
-    <div class="container">
-        <div class="container-fluid">
-        <div class="row">
-            <!-- The sidebar -->
-            <div class="col-md-3 col-lg-2 bg-light sidebar">
-                <div class="d-flex flex-column align-items-start p-3">
-                    <h4 class="text-center mb-4">Admin Dashboard</h4>
-                    <div class="nav flex-column">
-                        <a class="nav-link active" href="#">
-                            <i class="fa-solid fa-home"></i> Dashboard
-                        </a>
-                        <a class="nav-link" href="#members">
-                            <i class="fa-solid fa-users"></i> Members
-                        </a>
-                        <a class="nav-link" href="#producers">
-                            <i class="fa-solid fa-building"></i> Producers
-                        </a>
-                        <a class="nav-link" href="#movies">
-                            <i class="fa-solid fa-film"></i> Movies
-                        </a>
-                        <a class="nav-link" href="#genres">
-                            <i class="fa-solid fa-tags"></i> Genres
-                        </a>
-                        <a class="nav-link" href="#ratings">
-                            <i class="fa-solid fa-star"></i> Ratings
-                        </a>
-                        <a class="nav-link" href="#reviews">
-                            <i class="fa-solid fa-comment"></i> Reviews
-                        </a>
-                        <a class="nav-link" href="#comments">
-                            <i class="fa-solid fa-comments"></i> Comments
-                        </a>
-                        <a class="nav-link" href="#watchlists">
-                            <i class="fa-solid fa-list"></i> Watchlists
-                        </a>
-                        <a class="nav-link" href="#friendships">
-                            <i class="fa-solid fa-user-friends"></i> Friendships
-                        </a>
-                        <a class="nav-link" href="#notifications">
-                            <i class="fa-solid fa-bell"></i> Notifications
-                        </a>
-                        <a class="nav-link" href="#actors">
-                            <i class="fa-solid fa-theater-masks"></i> Actors
-                        </a>
-                        <a class="nav-link" href="#shared-watchlists">
-                            <i class="fa-solid fa-share"></i> Shared Watchlists
-                        </a>
-                        <a class="nav-link" href="#admins">
-                            <i class="fa-solid fa-user-shield"></i> Admins
-                        </a>
-                    </div>
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Members</h1>
+                    
+                   <table class="table">
+                        <thead>
+                            <tr>
+                                <td>S/N</td>
+                                <td>First Name</td>
+                                <td>Last Name</td>
+                                <td>Username</td>
+                                <td>Email</td>
+                                <td>Date Joined</td>
+                                <td></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>
+                                    <button class="btn btn-danger">Delete</button>
+                                    <button class="btn btn-primary">Update</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                   </table>
                 </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                <h2 class="my-4">Dashboard</h2>
-                
-                <!-- Members Section -->
-                <div id="members" class="mb-5">
-                    <h3>Members</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all members here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Producers Section -->
-                <div id="producers" class="mb-5">
-                    <h3>Producers</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all producers here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Movies Section -->
-                <div id="movies" class="mb-5">
-                    <h3>Movies</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all movies here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Genres Section -->
-                <div id="genres" class="mb-5">
-                    <h3>Genres</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all genres here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Ratings Section -->
-                <div id="ratings" class="mb-5">
-                    <h3>Ratings</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all ratings here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Reviews Section -->
-                <div id="reviews" class="mb-5">
-                    <h3>Reviews</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all reviews here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comments Section -->
-                <div id="comments" class="mb-5">
-                    <h3>Comments</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all comments here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Watchlists Section -->
-                <div id="watchlists" class="mb-5">
-                    <h3>Watchlists</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all watchlists here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Friendships Section -->
-                <div id="friendships" class="mb-5">
-                    <h3>Friendships</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all friendships here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notifications Section -->
-                <div id="notifications" class="mb-5">
-                    <h3>Notifications</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all notifications here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actors Section -->
-                <div id="actors" class="mb-5">
-                    <h3>Actors</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all actors here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Shared Watchlists Section -->
-                <div id="shared-watchlists" class="mb-5">
-                    <h3>Shared Watchlists</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all shared watchlists here.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Admins Section -->
-                <div id="admins" class="mb-5">
-                    <h3>Admins</h3>
-                    <div class="card">
-                        <div class="card-body">
-                            <p>Manage and view all admins here.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-     <script src="bootstrap/js/bootstrap.bundle.js" type="text/javascript"></script>
-</body>
-</html>
+{% endblock %}

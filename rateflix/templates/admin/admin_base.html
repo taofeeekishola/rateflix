@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/ico" href="/static/images/favicon-32x32.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/fa/css/all.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Admin RateFlix</title>
+</head>
+<body>
+    <div class="container">
+         <div class="container-fluid">
+            <div class="row">
+                <!-- The sidebar -->
+                <div class="col-md-3 col-lg-2 bg-light sidebar">
+                    <div class="d-flex flex-column align-items-start p-3">
+                        <h4 class="text-center mb-4">Admin Dashboard</h4>
+                        <div class="nav flex-column">
+                            <a class="nav-link active" href="#">
+                                <i class="fa-solid fa-home"></i> Dashboard
+                            </a>
+                            <a class="nav-link" href="#members">
+                                <i class="fa-solid fa-users"></i> Members
+                            </a>
+                            <a class="nav-link" href="#producers">
+                                <i class="fa-solid fa-building"></i> Producers
+                            </a>
+                            <a class="nav-link" href="/admin/movies/">
+                                <i class="fa-solid fa-film"></i> Movies
+                            </a>
+                            <a class="nav-link" href="#genres">
+                                <i class="fa-solid fa-tags"></i> Genres
+                            </a>
+                            <a class="nav-link" href="#ratings">
+                                <i class="fa-solid fa-star"></i> Ratings
+                            </a>
+                            <a class="nav-link" href="#reviews">
+                                <i class="fa-solid fa-comment"></i> Reviews
+                            </a>
+                            <a class="nav-link" href="#actors">
+                                <i class="fa-solid fa-theater-masks"></i> Actors
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {% block admincontent %}
+
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+       
+        
+
+     <script src="bootstrap/js/bootstrap.bundle.js" type="text/javascript"></script>
+</body>
+</html>
