@@ -19,7 +19,7 @@
             {{ movie.title(class="form-control mb-3", placeholder='Title') }}
             {% if movie.title.errors %}
                 {% for error in movie.title.errors %}
-                    <p>{{ error }}</p>
+                    <p class="text-danger" >{{ error }}</p>
                 {% endfor %}
             {% endif %}
 

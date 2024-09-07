@@ -3,7 +3,13 @@
     <!-- Main Content -->
                 <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
                     <h1 class="my-4">Movies</h1>
-                    
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p class="alert alert-success"> {{ message }} </p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
                    <table class="table d-inline">
                         <thead>
                             <tr>
@@ -27,16 +33,18 @@
                                 <td>{{ movie.movie_title }}</td>
                                 <td>{{ movie.movie_description }}</td>
                                 <td>{{ movie.movie_release_date }}</td>
-                                <td>erer</td>
-                                <td>bfgbg</td>
+                                <td><a href="" > {{ movie.genres|count }}</a></td>
+                                <td> {{ movie.producer.producer_name }} </td>
+                                <td> {{ movie.studio.studio_name }} </td>
                                 <td>
-                                    fbfdb
+                                    {% if movie.movie_status == 'pending' %}
+                                        <button class="btn btn-warning">Pending</button>
+                                    {% elif movie.movie_status == 'approved' %}
+                                        <button class="btn btn-success">Approved</button>
+                                    {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-warning">Pending</button>
-                                </td>
-                                <td>
-                                    <button class="btn btn-primary">Update</button>
+                                    <a  href="/admin/movie/update/{{ movie.movie_id }}" class="btn btn-primary">Update</a>
                                     <button class="btn btn-danger">Delete</button>
                                 </td>
                                 

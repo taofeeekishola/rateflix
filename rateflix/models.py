@@ -23,6 +23,7 @@ class Member(db.Model):
     received_requests = db.relationship('Friendship', foreign_keys='Friendship.request_to', back_populates='receiver')
     notifications = db.relationship('Notification', back_populates='receiver')
     comment_likes = db.relationship('CommentLike', back_populates='member')
+    
 
 
 class Producer(db.Model):
@@ -49,6 +50,7 @@ class Movie(db.Model):
     reviews = db.relationship('Review', back_populates='movie')
     watchlist_movies = db.relationship('WatchlistMovie', back_populates='movie')
     movie_actors = db.relationship('MovieActor', back_populates='movie')
+    studio = db.relationship('Studio', back_populates='movie')
 
 
 class Genre(db.Model):
@@ -187,5 +189,7 @@ class Admin(db.Model):
 class Studio(db.Model):
     studio_id = db.Column(db.Integer, primary_key=True)
     studio_name = db.Column(db.String(255), nullable=False)
+
+    movie = db.relationship('Movie', back_populates='studio')
 
     # movies = db.relationship('MovieGenre', back_populates='genre')
