@@ -15,6 +15,7 @@ def admin_movies():
     # movie_genre = db.session.query(MovieGenre).all()
     return render_template('admin/movies.html', movies=movies)
 
+##admin can update the values of a movie in this route
 @app.route('/admin/movie/update/<int:id>', methods=['GET','POST'])
 def update_movies(id):
     movie = db.session.query(Movie).get(id)
@@ -54,7 +55,7 @@ def update_movies(id):
         poster.save("rateflix/static/uploads/poster/"+poster_name+extension1)
 
         trailer_name = secrets.token_hex(10)
-        trailer.save("rateflix/static/uploads/poster/"+trailer_name+extension2)
+        trailer.save("rateflix/static/uploads/trailers/"+trailer_name+extension2)
 
         ##updating data in the database
         movie.movie_title = title
