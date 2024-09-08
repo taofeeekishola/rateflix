@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField,PasswordField,SubmitField,DateField,TextAreaField
+from wtforms import StringField,PasswordField,SubmitField,DateField,TextAreaField,SelectMultipleField
 from flask_wtf.file import FileField, FileAllowed,FileRequired
 from wtforms.validators import DataRequired, Email, EqualTo
 
@@ -28,6 +28,7 @@ class MovieForm(FlaskForm):
     producer = StringField('Producer')
     studio = StringField('Production Studio',validators=[DataRequired(message="Studio missing")])
     submit = SubmitField('Submit')
+
 
 class MovieReview(FlaskForm):
     review = TextAreaField("Review")

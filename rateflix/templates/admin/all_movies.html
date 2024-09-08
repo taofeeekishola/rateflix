@@ -17,6 +17,7 @@
                                 <td>Title</td>
                                 <td>Description</td>
                                 <td>Release Date</td>
+                                <td>Actors</td>
                                 <td>Genres</td>
                                 <td>Producer</td>
                                 <td>Studio</td>
@@ -33,7 +34,8 @@
                                 <td>{{ movie.movie_title }}</td>
                                 <td>{{ movie.movie_description }}</td>
                                 <td>{{ movie.movie_release_date }}</td>
-                                <td><a href="" > {{ movie.genres|count }}</a></td>
+                                <td> <a href="/admin/movie/actors/{{ movie.movie_id }}/" >{{ movie.movie_actors|count }}</a> </td>
+                                <td><a href="/admin/movie/genre/{{ movie.movie_id }}/" > {{ movie.genres|count }}</a></td>
                                 <td> {{ movie.producer.producer_name }} </td>
                                 <td> {{ movie.studio.studio_name }} </td>
                                 <td>

@@ -43,6 +43,8 @@
                             {% endfor %}
                         </select>
 
+                        
+
                         {{ movieform.producer.label }}
                         <select name="producer" id="producer" class="form-select mb-3">
                             <option value="{{ movie.producer_id }}"> {{ movie.producer.producer_name }} </option>
@@ -75,7 +77,7 @@
                         {% endfor %}
                         
                         {{ movieform.poster.label(class='d-block mt-3') }}
-                        {{ movieform.poster(class='form-control') }}
+                        {{ movieform.poster(class='form-control', value=movie.movie_poster) }}
 
                         {% if movieform.poster.errors %}
                             {% for error in movieform.poster.errors %}
@@ -84,7 +86,7 @@
                         {% endif %}
 
                         {{ movieform.trailer.label(class='d-block mt-3') }}
-                        {{ movieform.trailer(class='form-control') }}
+                        {{ movieform.trailer(class='form-control', value=movie.movie_trailer) }}
 
                          {% if movieform.trailer.errors %}
                             {% for error in movieform.trailer.errors %}

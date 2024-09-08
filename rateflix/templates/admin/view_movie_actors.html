@@ -1,0 +1,37 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+        <h1 class="my-4">{{ movie.movie_title }} Actors</h1>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="alert alert-success"> {{ message }} </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <td>S/N</td>
+                    <td>Name</td>
+                    <td>Role</td> <!-- Added column for role -->
+                </tr>
+            </thead>
+            <tbody>
+                {% if actors %}
+                    {% for movieactor in actors %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ movieactor.actor.actor_name }}</td>
+                            <td>{{ movieactor.role_name }}</td> <!-- Display role name -->
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="alert alert-danger">No Actors</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

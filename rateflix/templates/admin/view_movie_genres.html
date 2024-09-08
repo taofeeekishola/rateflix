@@ -1,0 +1,39 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">{{  movie.movie_title }} Genre </h1>
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p class="alert alert-success"> {{ message }} </p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <!-- <a href="" class="btn btn-primary text-end" >Add Genre</a> -->
+                    <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>S/N</td>
+                                    <td>Name</td>
+                                    <td>Activity</td>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                               {% if genres %}
+                                    {% for movie_genre in genres %}
+                                        <tr>
+                                            <td> {{ loop.index }} </td>
+                                            <td>{{ movie_genre.genre.genre_name }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                        <tr>
+                                            <td colspan="3" class="alert alert-danger" >No Genre</td>
+                                        </tr>
+                                {% endif %}
+                            </tbody>
+                    </table>
+                </div>
+{% endblock %}

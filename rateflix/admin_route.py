@@ -27,7 +27,8 @@ def update_movies(id):
     genre = db.session.query(Genre).all()
 
     movieactors = MovieActor.query.get(id)
-    moviegenres = MovieGenre.query.get(id)
+
+    
     movieform = MovieForm()
 
     if movieform.validate_on_submit():
@@ -67,23 +68,29 @@ def update_movies(id):
         movie.movie_trailer = trailer_name+extension2
         movie.movie_status = 'approved'
 
-        ##this checks if the movie already has actors before updating
-        if movieactors != None:
-            movieactors.movie_id = id
-            movieactors.actor_id = movie_actor
-        else:
-            addmovieactors = MovieActor(movie_id=id, actor_id=movie_actor)
-            db.session.add(addmovieactors)
+       # Get all existing actors related to the movie
+        movieactors = MovieActor.query.filter_by(movie_id=id).all()
+
+        # Delete all existing actors related to this movie (if any)
+        if movieactors:
+            for ma in movieactors:
+                db.session.delete(ma)
+
+        # Add new actors (assuming movie_actor is a list of actor IDs from the form)
+        for actor_id in movie_actor:  # movie_actor should be a list of actor IDs from the form
+            new_movie_actor = MovieActor(movie_id=id, actor_id=int(actor_id))
+            db.session.add(new_movie_actor)
 
         ##this checks if the movie already has genres before updating
-        if moviegenres != None:
-            for g in moviegenres:
-                moviegenres.movie_id=id
-                moviegenres.genre_id=int(g)
-        else:
-            for g in movie_genre:
-                    movie_genre_data = MovieGenre(movie_id=id,genre_id=int(g))
-                    db.session.add(movie_genre_data)
+        moviegenres = MovieGenre.query.filter_by(movie_id=id).all()
+
+        if moviegenres:
+            for mg in moviegenres:
+                db.session.delete(mg)
+
+        for g in movie_genre:
+                movie_genre_data = MovieGenre(movie_id=id,genre_id=int(g))
+                db.session.add(movie_genre_data)
 
 
         db.session.commit()
@@ -92,6 +99,21 @@ def update_movies(id):
             
         
     return render_template('admin/update_movie.html', movie=movie, movieform=movieform,  actor=actor, all_actors=actors, producers=producers,studio=studio, genre=genre)
+
+##route to see the genres of a movie
+@app.route('/admin/movie/genre/<int:id>/')
+def movie_genres(id):
+    movie = Movie.query.get(id)
+    genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
+    return render_template('admin/view_movie_genres.html',movie=movie,genres=genres)
+
+##route to see all the actors of a movie
+@app.route('/admin/movie/actors/<int:id>/')
+def movie_actors(id):
+    movie = Movie.query.get(id)
+    actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
+    return render_template('admin/view_movie_actors.html',movie=movie,actors=actors)
+
 
 ## route to view all the actors
 @app.route('/admin/actors/')
