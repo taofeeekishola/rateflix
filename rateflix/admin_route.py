@@ -13,7 +13,7 @@ def admin():
 def admin_movies():
     movies = db.session.query(Movie).all()
     # movie_genre = db.session.query(MovieGenre).all()
-    return render_template('admin/movies.html', movies=movies)
+    return render_template('admin/all_movies.html', movies=movies)
 
 ##admin can update the values of a movie in this route
 @app.route('/admin/movie/update/<int:id>', methods=['GET','POST'])

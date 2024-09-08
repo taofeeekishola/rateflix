@@ -175,7 +175,7 @@ def user_addmovie():
 def movie_info(id):
     movies = Movie.query.get(id)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
-    genres = MovieGenre.query.filter(MovieGenre.movie_genre_id == id).all()
+    genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
 
     ##user review form
     review = MovieReview()
