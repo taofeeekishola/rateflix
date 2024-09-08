@@ -1,0 +1,24 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Add Actor to {{ movie.movie_title }}</h1>
+                
+                    <form method="post" action="/admin/addactor/{{ movie.movie_id }}/" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+
+                        <label for="actor">Actor</label>
+                        <select name="actor" id="actor" class="form-select mb-3">
+                            <!--this displays the actors that are not in the movie-->
+                            {% for actor in all_actors %}
+                                {% if actor.actor_id not in movie.movie_actors|map(attribute='actor.actor_id') %}
+                                    <option value="{{ actor.actor_id }}">{{ actor.actor_name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+
+                        <button class="btn btn-primary" >Add Movie</button>
+                    </form>
+                </div>
+{% endblock %}

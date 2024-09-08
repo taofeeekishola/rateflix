@@ -1,5 +1,5 @@
 import os,secrets
-from flask import render_template,redirect,flash,request,session
+from flask import render_template,redirect,flash,request,session,url_for
 
 from rateflix import app
 from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail,GenreDetail
@@ -26,11 +26,7 @@ def update_movies(id):
     studio = db.session.query(Studio).all()
     genre = db.session.query(Genre).all()
 
-    movieactors = MovieActor.query.get(id)
-
-    
     movieform = MovieForm()
-
     if movieform.validate_on_submit():
         title = request.form.get('title')
         release_date= request.form.get('release_date')
@@ -43,20 +39,25 @@ def update_movies(id):
         trailer = request.files.get('trailer')
 
         ##getting the filenames
-        poster_filename = poster.filename
-        trailer_filename = trailer.filename
+        if poster and poster.filename:
+            poster_filename = poster.filename
+            poster_ext = os.path.splitext(poster_filename)
+            extension1 = poster_ext[-1]
+    
+            ##generating new names
+            poster_name = secrets.token_hex(10)
+            poster.save("rateflix/static/uploads/poster/"+poster_name+extension1)
+            movie.movie_poster = poster_name+extension1
+           
         
-        poster_ext = os.path.splitext(poster_filename)
-        extension1 = poster_ext[-1]
-        trailer_ext = os.path.splitext(trailer_filename)
-        extension2 = trailer_ext[-1]
+        if trailer and trailer.filename:
+            trailer_filename = trailer.filename
+            trailer_ext = os.path.splitext(trailer_filename)
+            extension2 = trailer_ext[-1]
 
-        ##generating new names
-        poster_name = secrets.token_hex(10)
-        poster.save("rateflix/static/uploads/poster/"+poster_name+extension1)
-
-        trailer_name = secrets.token_hex(10)
-        trailer.save("rateflix/static/uploads/trailers/"+trailer_name+extension2)
+            trailer_name = secrets.token_hex(10)
+            trailer.save("rateflix/static/uploads/trailers/"+trailer_name+extension2)
+            movie.movie_trailer = trailer_name+extension2
 
         ##updating data in the database
         movie.movie_title = title
@@ -64,40 +65,44 @@ def update_movies(id):
         movie.movie_description = summary
         movie.production_studio = movie_studio
         movie.producer_id = movie_producer
-        movie.movie_poster = poster_name+extension1
-        movie.movie_trailer = trailer_name+extension2
         movie.movie_status = 'approved'
 
        # Get all existing actors related to the movie
         movieactors = MovieActor.query.filter_by(movie_id=id).all()
 
-        # Delete all existing actors related to this movie (if any)
-        if movieactors:
-            for ma in movieactors:
-                db.session.delete(ma)
+        # Create a set of existing actor IDs for the current movie
+        existing_actor_ids = {ma.actor_id for ma in movieactors}
 
-        # Add new actors (assuming movie_actor is a list of actor IDs from the form)
-        for actor_id in movie_actor:  # movie_actor should be a list of actor IDs from the form
-            new_movie_actor = MovieActor(movie_id=id, actor_id=int(actor_id))
-            db.session.add(new_movie_actor)
+        # List of actor IDs to add (assuming 'movie_actor' is a list of actor IDs from the form)
+        for actor_id in movie_actor: 
+            actor_id = int(actor_id)  
+
+            # Check if the actor is already related to the movie
+            if actor_id not in existing_actor_ids:
+                # Actor is not yet added to this movie, so add it
+                new_movie_actor = MovieActor(movie_id=id, actor_id=actor_id)
+                db.session.add(new_movie_actor)
 
         ##this checks if the movie already has genres before updating
         moviegenres = MovieGenre.query.filter_by(movie_id=id).all()
 
-        if moviegenres:
-            for mg in moviegenres:
-                db.session.delete(mg)
+        # Create a set of existing genre IDs for the current movie
+        existing_genre_ids = {mg.genre_id for mg in moviegenres}
 
-        for g in movie_genre:
-                movie_genre_data = MovieGenre(movie_id=id,genre_id=int(g))
-                db.session.add(movie_genre_data)
+        # Loop through the genre IDs provided in the form (assuming movie_genre is a list of genre IDs)
+        for genre_id in movie_genre:
+            genre_id = int(genre_id)  
 
+            # Check if the genre is already related to the movie
+            if genre_id not in existing_genre_ids:
+                # Genre is not yet added to this movie, so add it
+                new_movie_genre = MovieGenre(movie_id=id, genre_id=genre_id)
+                db.session.add(new_movie_genre)
 
         db.session.commit()
         flash('Movie has been updated and approved')
         return redirect('/admin/movies/')
-            
-        
+             
     return render_template('admin/update_movie.html', movie=movie, movieform=movieform,  actor=actor, all_actors=actors, producers=producers,studio=studio, genre=genre)
 
 ##route to see the genres of a movie
@@ -114,6 +119,23 @@ def movie_actors(id):
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     return render_template('admin/view_movie_actors.html',movie=movie,actors=actors)
 
+## route to add a new actor to a movie
+@app.route('/admin/addactor/<int:id>/',methods=['GET','POST'])
+def admin_addactor(id):
+    movie = Movie.query.get(id)
+    actors = db.session.query(Actor).all()
+    if request.method == 'POST':
+        name = request.form.get('actor')
+
+        add_actor = MovieActor(movie_id=id,actor_id=name)
+        
+        db.session.add(add_actor)
+        db.session.commit()
+
+        flash('Actor has been added')
+        return redirect(url_for('movie_actors', id=id))
+
+    return render_template('admin/add_movieactor.html', movie=movie, all_actors=actors)
 
 ## route to view all the actors
 @app.route('/admin/actors/')

@@ -32,7 +32,7 @@
                         <select name="actor" id="actor" class="form-select mb-3">
                             <!-- Display movie actors first -->
                             {% for movie_actor in movie.movie_actors %}
-                                <option value="{{ movie_actor.actor.actor_id }}" selected>{{ movie_actor.actor.actor_name }}</option>
+                                <option value="{{ movie_actor.actor.actor_id }}">{{ movie_actor.actor.actor_name }} Added</option>
                             {% endfor %}
 
                             <!-- Display other actors, excluding those already in movie.movie_actors -->
