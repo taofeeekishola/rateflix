@@ -2,7 +2,7 @@ import os,secrets
 from flask import render_template,redirect,flash,request,session
 
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail
+from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail,GenreDetail
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review
 
 @app.route('/admin/')
@@ -212,3 +212,26 @@ def update_producer(id):
     
     return render_template('admin/update_producer.html',producerdetails=producerdetails,producer=producer)
 
+
+##this route is for displaying all genres
+@app.route('/admin/genres/')
+def admin_genre():
+    genres = Genre.query.all()
+    return render_template('admin/admin_genre.html', genres=genres)
+
+## this route is for adding new genres
+@app.route('/admin/genre/add/', methods=['GET','POST'])
+def add_genre():
+    genre = GenreDetail()
+
+    if genre.validate_on_submit():
+        name = request.form.get('name')
+
+        genredetails = Genre(genre_name=name)
+        
+        db.session.add(genredetails)
+        db.session.commit()
+
+        flash('Genre has been added')
+        return redirect('/admin/genres/')
+    return render_template('admin/add_genre.html' ,genre=genre )

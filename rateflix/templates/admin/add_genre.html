@@ -1,0 +1,21 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Add Genre</h1>
+                
+                    <form method="post" action="/admin/genre/add/" novalidate>
+                        {{ genre.csrf_token }}
+
+                        {{ genre.name(class_='form-control mb-3', placeholder='Genre Name') }}
+                        {% if genre.name.errors %}
+                            {% for error in genre.name.errors %}
+                                <p class="text-danger" > {{ error }} </p>
+                            {% endfor %}
+                        {% endif %}
+
+                        {{ genre.add(class_='btn btn-primary') }}
+
+                    </form>
+                </div>
+{% endblock %}

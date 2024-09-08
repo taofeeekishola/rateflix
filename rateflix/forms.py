@@ -34,11 +34,15 @@ class MovieReview(FlaskForm):
     submit_review = SubmitField('Submit')
 
 class ActorDetail(FlaskForm):
-    name = StringField('First Name',validators=[DataRequired(message='Name required')])
+    name = StringField('First Name',validators=[DataRequired(message='Actor name required')])
     bio = TextAreaField('Last Name')
     picture = FileField('Picture',validators=[FileAllowed(["jpg","png"],"Invalid File Format")])
     add = SubmitField('Add')
 
 class ProducerDetail(FlaskForm):
-    name = StringField('Full Name',validators=[DataRequired(message='Name is required')])
+    name = StringField('Full Name',validators=[DataRequired(message='Producer name is required')])
+    add = SubmitField('Add')
+
+class GenreDetail(FlaskForm):
+    name = StringField('Full Name',validators=[DataRequired(message='Genre name is required')])
     add = SubmitField('Add')
