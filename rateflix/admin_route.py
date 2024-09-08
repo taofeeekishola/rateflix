@@ -2,7 +2,7 @@ import os,secrets
 from flask import render_template,redirect,flash,request,session
 
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm,MovieReview
+from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review
 
 @app.route('/admin/')
@@ -16,7 +16,7 @@ def admin_movies():
     return render_template('admin/all_movies.html', movies=movies)
 
 ##admin can update the values of a movie in this route
-@app.route('/admin/movie/update/<int:id>', methods=['GET','POST'])
+@app.route('/admin/movie/update/<int:id>/', methods=['GET','POST'])
 def update_movies(id):
     movie = db.session.query(Movie).get(id)
     actors = db.session.query(Actor).all()
@@ -92,3 +92,78 @@ def update_movies(id):
             
         
     return render_template('admin/update_movie.html', movie=movie, movieform=movieform,  actor=actor, all_actors=actors, producers=producers,studio=studio, genre=genre)
+
+## route to view all the actors
+@app.route('/admin/actors/')
+def admin_actors():
+    actors = Actor.query.all()
+    # details = ActorDetail()
+    return render_template('admin/movie_actors.html',actors=actors)
+
+## route to add a new actor to the database
+@app.route('/admin/actors/add/', methods=['GET','POST'])
+def add_actors():
+    details = ActorDetail()
+    if details.validate_on_submit():
+        name = request.form.get('name')
+        bio = request.form.get('bio')
+        picture = request.files.get('picture')
+
+        actor_photo = 'default_actor.jpg'
+
+        if picture and picture.filename != '':
+            ##getting the filenames
+            actor_filename = picture.filename
+
+            actor_ext = os.path.splitext(actor_filename)
+            extension = actor_ext[-1]
+        
+            ##generating new names
+            actor_name = secrets.token_hex(10)
+            picture.save("rateflix/static/uploads/actors/"+actor_name+extension)
+            actor_photo = actor_name+extension
+
+        actors = Actor(actor_name=name,actor_bio=bio,actor_photo=actor_photo)
+
+        db.session.add(actors)
+        db.session.commit()
+
+        flash('Actor has been added')
+        return redirect('/admin/actors/')
+
+
+    return render_template('admin/add_actor.html',details=details)
+
+## route for updating actor details
+@app.route('/admin/actors/update/<int:id>/',methods=['GET','POST'])
+def update_actor(id):
+    actor = Actor.query.get(id)
+    details = ActorDetail()
+
+    if details.validate_on_submit():
+        name = request.form.get('name')
+        bio = request.form.get('bio')
+        picture = request.files.get('picture')
+
+        if picture and picture.filename != '':
+            ##getting the filenames
+            actor_filename = picture.filename
+
+            
+            actor_ext = os.path.splitext(actor_filename)
+            extension = actor_ext[-1]
+        
+            ##generating new names
+            actor_name = secrets.token_hex(10)
+            picture.save("rateflix/static/uploads/actors/"+actor_name+extension)
+            actor.actor_photo = actor_name+extension
+
+        ## uppdating the actor details
+        actor.actor_name = name
+        actor.actor_bio = bio
+        db.session.commit()
+
+        flash('Actor has been updated')
+        return redirect('/admin/actors/')
+    
+    return render_template('admin/update_actor.html',details=details, actor=actor)

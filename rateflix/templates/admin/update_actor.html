@@ -1,0 +1,32 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Update Actor Deatils</h1>
+                
+                    <form method="post" action="/admin/actors/update/{{ actor.actor_id }}/" novalidate enctype="multipart/form-data">
+                        {{ details.csrf_token }}
+
+                        {{ details.name(class_='form-control mb-3', placeholder='Full Name', value=actor.actor_name ) }}
+                        {% if details.name.errors %}
+                            {% for error in details.name.errors %}
+                                <p class="text-danger" > {{ error }} </p>
+                            {% endfor %}
+                        {% endif %}
+
+
+                        {{ details.bio(class_='form-control mb-3', placeholder='Bio', value=actor.actor_bio)  }}
+
+                        
+                        {{ details.picture(class_='form-control mb-3') }}
+                        {% if details.picture.errors %}
+                            {% for error in details.picture.errors %}
+                                <p class="text-danger" > {{ error }} </p>
+                            {% endfor %}
+                        {% endif %}
+
+                        {{ details.add(class_='btn btn-primary') }}
+
+                    </form>
+                </div>
+{% endblock %}

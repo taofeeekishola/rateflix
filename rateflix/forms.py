@@ -32,3 +32,9 @@ class MovieForm(FlaskForm):
 class MovieReview(FlaskForm):
     review = TextAreaField("Review")
     submit_review = SubmitField('Submit')
+
+class ActorDetail(FlaskForm):
+    name = StringField('First Name',validators=[DataRequired(message='Name required')])
+    bio = TextAreaField('Last Name')
+    picture = FileField('Picture',validators=[FileAllowed(["jpg","png"],"Invalid File Format")])
+    add = SubmitField('Add')

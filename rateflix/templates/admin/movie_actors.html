@@ -1,0 +1,41 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Actors</h1>
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p class="alert alert-success"> {{ message }} </p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <a href="{{ url_for('add_actors') }}" class="btn btn-primary text-end" >Add Actor</a>
+                   <table class="table d-inline">
+                        <thead>
+                            <tr>
+                                <td>S/N</td>
+                                <td>Name</td>
+                                <td>Bio</td>
+                                <td>Activity</td>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for a in actors %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ a.actor_name }}</td>
+                                    <td>{{ a.actor_bio }}</td>
+                                    <td>
+                                        <a href="/admin/actors/update/{{ a.actor_id }}/" class="btn btn-primary">Update</a>
+                                        <a href="" class="btn btn-danger" >Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                   </table>
+                  
+                   
+                </div>
+{% endblock %}
