@@ -1,0 +1,21 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Add Producer</h1>
+                
+                    <form method="post" action="/admin/producers/add/" novalidate>
+                        {{ producer.csrf_token }}
+
+                        {{ producer.name(class_='form-control mb-3', placeholder='Full Name') }}
+                        {% if producer.name.errors %}
+                            {% for error in producer.name.errors %}
+                                <p class="text-danger" > {{ error }} </p>
+                            {% endfor %}
+                        {% endif %}
+
+                        {{ producer.add(class_='btn btn-primary') }}
+
+                    </form>
+                </div>
+{% endblock %}

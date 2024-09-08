@@ -2,7 +2,7 @@ import os,secrets
 from flask import render_template,redirect,flash,request,session
 
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail
+from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review
 
 @app.route('/admin/')
@@ -167,3 +167,48 @@ def update_actor(id):
         return redirect('/admin/actors/')
     
     return render_template('admin/update_actor.html',details=details, actor=actor)
+
+
+## route to add more producers
+@app.route('/admin/producers/')
+def admin_producers():
+    producers = Producer.query.all()
+
+    return render_template('admin/admin_producers.html', producers=producers)
+
+## route for adding produce
+@app.route('/admin/producers/add/', methods=['GET','POST'])
+def add_producer():
+    producer = ProducerDetail()
+    if producer.validate_on_submit():
+        name = request.form.get('name')
+
+        add_producer = Producer(producer_name=name)
+
+        db.session.add(add_producer)
+        db.session.commit()
+
+        flash('Producer has been added')
+        return redirect('/admin/producers/')
+
+    return render_template('admin/add_producer.html', producer=producer)
+
+
+## this is the route for updating producer details
+@app.route('/admin/producers/update/<int:id>/', methods=['GET','POST'])
+def update_producer(id):
+    producerdetails = Producer.query.get(id)
+    producer = ProducerDetail()
+
+    if producer.validate_on_submit():
+        name = request.form.get('name')
+
+        producerdetails.producer_name = name
+
+        db.session.commit()
+
+        flash('Producer has been updated')
+        return redirect('/admin/producers/')
+    
+    return render_template('admin/update_producer.html',producerdetails=producerdetails,producer=producer)
+

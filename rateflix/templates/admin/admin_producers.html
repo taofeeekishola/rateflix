@@ -1,0 +1,39 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Producers</h1>
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p class="alert alert-success"> {{ message }} </p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <a href="/admin/producers/add/" class="btn btn-primary text-end" >Add Producer</a>
+                    <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>S/N</td>
+                                    <td>Name</td>
+                                    <td>Movies</td>
+                                    <td>Activity</td>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for p in producers %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ p.producer_name }}</td>
+                                        <td>{{ p.movies|count }}</td>
+                                        <td>
+                                            <a href="/admin/producers/update/{{ p.producer_id }}/" class="btn btn-primary">Update</a>
+                                            <a href="" class="btn btn-danger" >Delete</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                    </table>
+                </div>
+{% endblock %}

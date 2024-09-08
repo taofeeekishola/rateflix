@@ -38,3 +38,7 @@ class ActorDetail(FlaskForm):
     bio = TextAreaField('Last Name')
     picture = FileField('Picture',validators=[FileAllowed(["jpg","png"],"Invalid File Format")])
     add = SubmitField('Add')
+
+class ProducerDetail(FlaskForm):
+    name = StringField('Full Name',validators=[DataRequired(message='Name is required')])
+    add = SubmitField('Add')
