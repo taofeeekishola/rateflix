@@ -10,12 +10,13 @@
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
-                    <!-- <a href="" class="btn btn-primary text-end" >Add Genre</a> -->
+                    <a href="/admin/addgenre/{{ movie.movie_id}}/" class="btn btn-primary text-end" >Add Genre</a>
                     <table class="table">
                             <thead>
                                 <tr>
                                     <td>S/N</td>
                                     <td>Name</td>
+                                    <td>Activity</td>
                                 </tr>
                             </thead>
 
@@ -25,6 +26,7 @@
                                         <tr>
                                             <td> {{ loop.index }} </td>
                                             <td>{{ movie_genre.genre.genre_name }}</td>
+                                            <td> <a href="/admin/delgenre/{{ movie.movie_id }}/{{ movie_genre.genre_id }}" class="btn btn-danger" >Delete</a> </td>
                                         </tr>
                                     {% endfor %}
                                 {% else %}

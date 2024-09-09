@@ -1,0 +1,25 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Add Genre to {{ movie.movie_title }}</h1>
+                
+                    <form method="post" action="/admin/addgenre/{{ movie.movie_id}}/" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    {% for g in genres %}
+                        {% if g.genre_id not in movie_genre_ids %}
+                            <input type="checkbox" name="genre"  value="{{ g.genre_id }}" class="form-check-input mb-2" >
+                            <label> {{ g.genre_name }}</label>
+                        {% endif %}
+                    {% endfor %}
+
+                    
+
+                        <button class="btn btn-primary d-block mt-2" >Add genre</button>
+                    </form>
+
+                  {{ movie.genres.genre_id }}
+                </div>
+{% endblock %}
+

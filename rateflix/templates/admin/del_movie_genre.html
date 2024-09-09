@@ -1,0 +1,11 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Delete {{ genre.genre.genre_name }}  </h1>
+                    
+                    <h3>Are you sure you want to delete</h3>
+                    <a href="/admin/movie/genre/{{ movie.movie_id }}/" class="btn btn-primary">No</a>
+                    <a href="/admin/delgenre/confirm/{{ movie.movie_id }}/{{ genre.genre_id }}/" class="btn btn-danger" >Yes</a>
+                </div>
+{% endblock %}

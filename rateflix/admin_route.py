@@ -105,15 +105,55 @@ def update_movies(id):
              
     return render_template('admin/update_movie.html', movie=movie, movieform=movieform,  actor=actor, all_actors=actors, producers=producers,studio=studio, genre=genre)
 
-
-
-
 ##route to see the genres of a movie
 @app.route('/admin/movie/genre/<int:id>/')
 def movie_genres(id):
     movie = Movie.query.get(id)
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
     return render_template('admin/view_movie_genres.html',movie=movie,genres=genres)
+
+## route to add a new genre to a movie
+@app.route('/admin/addgenre/<int:id>/', methods=['GET','POST'])
+def admin_addgenre(id):
+    movie = Movie.query.get(id)
+    genres = Genre.query.all()
+
+    ##list to get all the ids of the current movie
+    movie_genre_ids = [mg.genre_id for mg in MovieGenre.query.filter(MovieGenre.movie_id == id).all()]
+
+    if request.method == "POST":
+        genre = request.form.getlist('genre')
+
+        for g in genre:
+            new_genres = MovieGenre(movie_id=id, genre_id=int(g))
+
+            db.session.add(new_genres)
+            db.session.commit()
+
+            flash('Genre has been added')
+            return redirect(url_for('movie_genres', id=id))  
+        
+    return render_template('admin/add_moviegenre.html', movie=movie, genres=genres,movie_genre_ids=movie_genre_ids)
+
+##route to delete a genre from a movie
+@app.route('/admin/delgenre/<int:id>/<int:id2>')
+def admin_delgenre(id,id2):
+    movie = Movie.query.get(id)
+    genre = MovieGenre.query.filter(MovieGenre.movie_id == id,MovieGenre.genre_id==id2).first()
+
+    return render_template('admin/del_movie_genre.html',movie=movie,genre=genre)
+
+##confirm genre deletion
+@app.route('/admin/delgenre/confirm/<int:id>/<int:id2>/')
+def admin_confirm_delgenre(id,id2):
+    genre = MovieGenre.query.filter(MovieGenre.movie_id == id,MovieGenre.genre_id==id2).first()
+
+    if genre:
+        db.session.delete(genre)
+        db.session.commit()
+    
+    flash('Genre has been deleted')
+    return redirect(url_for('movie_genres', id=id))
 
 ##route to see all the actors of a movie
 @app.route('/admin/movie/actors/<int:id>/')
@@ -129,7 +169,6 @@ def admin_addactor(id):
     actors = db.session.query(Actor).all()
     if request.method == 'POST':
         name = request.form.get('actor')
-
         add_actor = MovieActor(movie_id=id,actor_id=name)
         
         db.session.add(add_actor)
@@ -140,7 +179,27 @@ def admin_addactor(id):
 
     return render_template('admin/add_movieactor.html', movie=movie, all_actors=actors)
 
-## route to view all the actors
+##route to delete actor from movie
+@app.route('/admin/delactor/<int:id>/<int:id2>')
+def admin_delactor(id,id2):
+    movie = Movie.query.get(id)
+    actors = MovieActor.query.filter(MovieActor.actor_id == id2 , MovieActor.movie_id == id).first()
+
+    return render_template('admin/del_movie_actor.html', actors=actors,movie=movie)
+
+##this confirms the deletion
+@app.route('/admin/delactor/confirm/<int:id>/<int:id2>')
+def admin_confirm_delactor(id,id2):
+    actors = MovieActor.query.filter(MovieActor.actor_id == id2 , MovieActor.movie_id == id).first()
+
+    if actors:
+        db.session.delete(actors)
+        db.session.commit()
+
+    flash('Actor has been deleted')
+    return redirect(url_for('movie_actors', id=id))
+
+## route to view all the actors in the database
 @app.route('/admin/actors/')
 def admin_actors():
     actors = Actor.query.all()
@@ -151,6 +210,7 @@ def admin_actors():
 @app.route('/admin/actors/add/', methods=['GET','POST'])
 def add_actors():
     details = ActorDetail()
+    ## checking if actors exists
     if details.validate_on_submit():
         name = request.form.get('name')
         bio = request.form.get('bio')
@@ -234,7 +294,7 @@ def confirm_actor_delete(id):
     return redirect('/admin/actors/')
 
 
-## route to add more producers
+## route to see more producers
 @app.route('/admin/producers/')
 def admin_producers():
     producers = Producer.query.all()
@@ -245,6 +305,8 @@ def admin_producers():
 @app.route('/admin/producers/add/', methods=['GET','POST'])
 def add_producer():
     producer = ProducerDetail()
+
+    ##check if producer exists
     if producer.validate_on_submit():
         name = request.form.get('name')
 
@@ -306,6 +368,7 @@ def admin_genre():
 def add_genre():
     genre = GenreDetail()
 
+    ## check if genre exists
     if genre.validate_on_submit():
         name = request.form.get('name')
 

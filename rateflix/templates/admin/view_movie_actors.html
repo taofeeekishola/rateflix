@@ -15,7 +15,7 @@
                 <tr>
                     <td>S/N</td>
                     <td>Name</td>
-                    <td>Role</td> <!-- Added column for role -->
+                    <td>Activity</td> 
                 </tr>
             </thead>
             <tbody>
@@ -24,7 +24,7 @@
                         <tr>
                             <td>{{ loop.index }}</td>
                             <td>{{ movieactor.actor.actor_name }}</td>
-                            <td>{{ movieactor.role_name }}</td> <!-- Display role name -->
+                            <td> <a href="/admin/delactor/{{ movie.movie_id }}/{{ movieactor.actor_id }}" class="btn btn-danger" > Delete </a></td>
                         </tr>
                     {% endfor %}
                 {% else %}
