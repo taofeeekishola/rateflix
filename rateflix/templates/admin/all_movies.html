@@ -16,11 +16,13 @@
                                 <td>S/N</td>
                                 <td>Title</td>
                                 <td>Description</td>
-                                <td>Release Date</td>
+                                <td>Release Year</td>
                                 <td>Actors</td>
                                 <td>Genres</td>
                                 <td>Producer</td>
                                 <td>Studio</td>
+                                <td>Trailer</td>
+                                <td>Poster</td>
                                 <td>Status</td>
                                 <td>Activity</td>
                                 
@@ -33,16 +35,30 @@
                                 <td> {{ loop.index }} </td>
                                 <td>{{ movie.movie_title }}</td>
                                 <td>{{ movie.movie_description }}</td>
-                                <td>{{ movie.movie_release_date }}</td>
+                                <td>{{ movie.movie_release_date.strftime('%Y') }}</td>
                                 <td> <a href="/admin/movie/actors/{{ movie.movie_id }}/" >{{ movie.movie_actors|count }}</a> </td>
                                 <td><a href="/admin/movie/genre/{{ movie.movie_id }}/" > {{ movie.genres|count }}</a></td>
                                 <td> {{ movie.producer.producer_name }} </td>
                                 <td> {{ movie.studio.studio_name }} </td>
                                 <td>
+                                    {% if movie.movie_trailer %}
+                                        Yes
+                                    {% else %}
+                                        No
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if movie.movie_poster %}
+                                        Yes
+                                    {% else %}
+                                        No
+                                    {% endif %}
+                                </td>
+                                <td>
                                     {% if movie.movie_status == 'pending' %}
-                                        <button class="btn btn-warning">Pending</button>
+                                        <button class="btn btn-warning status-btn" data-id="{{ movie.id }}" data-status="pending">Pending</button>
                                     {% elif movie.movie_status == 'approved' %}
-                                        <button class="btn btn-success">Approved</button>
+                                        <button class="btn btn-success status-btn" data-id="{{ movie.id }}" data-status="pending">Approved</button>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -57,4 +73,9 @@
                    </table>
                    
                 </div>
+{% endblock %}
+{% block adminscript %} 
+    <script>
+      
+    </script>
 {% endblock %}

@@ -12,7 +12,9 @@ def get_user_byid(id):
 
 @app.route('/')
 def home():
-    movies = Movie.query.limit(6)
+    movies = Movie.query.all()
+    genres = Genre.query.all()
+    studio = Studio.query.all()
     ## this checks if the session is empty and allows us to use it to create a database object and access the data in the home page
     data = session.get('member_id')
     if data != None:
@@ -20,7 +22,14 @@ def home():
     else:
         user_session = None
 
-    return render_template('user/index.html' ,user_session=user_session,movies=movies)
+    return render_template('user/index.html' ,user_session=user_session,movies=movies,genres=genres,studio=studio)
+
+## this is the filter route
+@app.route('/movie/filter/')
+def filters():
+    movies = Movie.query.all()
+
+
 
 ##this checks if the username already exists in the database and displays the options using ajax
 @app.route('/user/valusername/')

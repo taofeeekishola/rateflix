@@ -22,6 +22,55 @@
             </div>
         </div>
 
+        <!--filter heading-->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h3 class="sub-heading">FILTER</h3>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <h4>Release Year</h4>
+                <select name="year" id="year" class="form-select mb-3">
+                    <option value=""> Select a year </option>
+                    <option value="2020"> 2020 </option>
+                    <option value="2021"> 2021 </option>
+                    <option value="2022"> 2022 </option>
+                    <option value="2023"> 2023 </option>
+                    <option value="2024"> 2024 </option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <h4>Genre</h4>
+                <select name="genre" id="genre" class="form-select mb-3">
+                    <option value=""> Select a genre </option>
+                    {% for g in genres %}
+                        <option value="{{ g.genre_id }}"> {{ g.genre_name }} </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <h4>Studio</h4>
+                <select name="studio" id="studio" class="form-select mb-3">
+                    <option value=""> Select a studio </option>
+                    {% for s in studio %}
+                        <option value="{{ s.studio_id }}"> {{ s.studio_name }} </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+
+        </div>
+
+          <div class="row">
+              <div class="col-md-12 text-center">
+                  <button class="btn btn-primary" id="filter">Filter</button>
+              </div>
+          </div>
+
         <!--Popular in theater header-->
         <div class="row mt-5">
             <div class="col-md-12">
@@ -30,7 +79,6 @@
         </div>
 
         <!--Popular in theater-->
-     
        <div class="row">
         {% if movies %}
           {% for movie in movies %}
@@ -461,3 +509,77 @@
         </div>
 
 {% endblock content %}
+{% block scripts %}
+    <script>
+        $(document).ready(function(){
+    $('#filter').click(function(){
+        var year = $('#year').val();
+        var genre = $('#genre').val();
+        var studio = $('#studio').val();
+
+        var data = {};
+        if (year) data.year = year;
+        if (genre) data.genre = genre;
+        if (studio) data.studio = studio;
+
+        $.ajax({
+            url: '/movie/filter/',
+            type: 'GET',
+            data: data,
+            success: function(response) {
+                var movies = response.movies;
+                var html = '';
+
+                if (movies.length) {
+                    html = movies.map(movie => `
+                        <div class="col-6 col-md-4 col-lg-2 mb-4">
+                            <div class="card card-custom">
+                                ${movie.movie_poster ? 
+                                    `<a href="/movie/info/${movie.movie_id}">
+                                        <img src="/static/uploads/poster/${movie.movie_poster}" class="card-img-top" alt="${movie.movie_title}">
+                                    </a>` : 
+                                    `<a href="#">
+                                        <img src="/static/Images/dispicableme.jpg" class="card-img-top" alt="Default Movie Poster">
+                                    </a>`
+                                }
+                                <div class="card-body">
+                                    <a href="/movie/info/${movie.movie_id}">
+                                        <p class="card-title mb-2">${movie.movie_title}</p>
+                                    </a>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <p class="card-text mb-0">
+                                            <i class="fa-solid fa-star"></i>
+                                            <i class="fa-solid fa-star"></i>
+                                            <i class="fa-solid fa-star"></i>
+                                            <i class="fa-solid fa-star"></i>
+                                            <i class="fa-solid fa-star"></i>
+                                        </p>
+                                    </div>
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <a href="/movie/info/${movie.movie_id}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn">
+                                            <i class="fa-solid fa-play"></i> Trailer
+                                        </a>
+                                        <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn">
+                                            <i class="fa-solid fa-plus"></i> Watchlist
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    html = '<p class="col-12">No movies found.</p>';
+                }
+
+                // Insert the generated HTML into the container
+                $('.row').html(html);
+            },
+            error: function(err){
+                console.log(err);
+            }
+        });
+    });
+});
+
+    </script>
+{% endblock %}

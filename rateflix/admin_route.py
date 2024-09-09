@@ -65,7 +65,7 @@ def update_movies(id):
         movie.movie_description = summary
         movie.production_studio = movie_studio
         movie.producer_id = movie_producer
-        movie.movie_status = 'approved'
+        # movie.movie_status = 'approved'
 
        # Get all existing actors related to the movie
         movieactors = MovieActor.query.filter_by(movie_id=id).all()
@@ -104,6 +104,9 @@ def update_movies(id):
         return redirect('/admin/movies/')
              
     return render_template('admin/update_movie.html', movie=movie, movieform=movieform,  actor=actor, all_actors=actors, producers=producers,studio=studio, genre=genre)
+
+
+
 
 ##route to see the genres of a movie
 @app.route('/admin/movie/genre/<int:id>/')
@@ -212,6 +215,24 @@ def update_actor(id):
     
     return render_template('admin/update_actor.html',details=details, actor=actor)
 
+##route for deleting an actor
+@app.route('/admin/actors/delete/<int:id>/')
+def delete_actor(id):
+    actor = Actor.query.get(id)
+    return render_template('admin/delete_actor.html',actor=actor)
+
+##route to confirm delete
+@app.route('/confirm/delete/actor/<int:id>')
+def confirm_actor_delete(id):
+    actor = Actor.query.get(id)
+
+    if actor:
+        db.session.delete(actor)
+        db.session.commit()
+    
+    flash('Actor has been deleted')
+    return redirect('/admin/actors/')
+
 
 ## route to add more producers
 @app.route('/admin/producers/')
@@ -256,6 +277,23 @@ def update_producer(id):
     
     return render_template('admin/update_producer.html',producerdetails=producerdetails,producer=producer)
 
+##this route is for deleting a producer
+@app.route('/admin/delete/producer/<int:id>/')
+def delete_producer(id):
+    producer = Producer.query.get(id)
+    return render_template('admin/delete_producer.html',producer=producer)
+
+##route for confirming the deletion of a producer
+@app.route('/confirm/delete/producer/<int:id>/')
+def confirm_delete_producer(id):
+    producer = Producer.query.get(id)
+
+    if producer:
+        db.session.delete(producer)
+        db.session.commit()
+    
+    flash('producer has been deleted')
+    return redirect('/admin/producers/')
 
 ##this route is for displaying all genres
 @app.route('/admin/genres/')
@@ -279,3 +317,21 @@ def add_genre():
         flash('Genre has been added')
         return redirect('/admin/genres/')
     return render_template('admin/add_genre.html' ,genre=genre )
+
+## this is the route for deleting a genre
+@app.route('/admin/delete/genre/<int:id>/')
+def admin_delete_genre(id):
+    genre = Genre.query.get(id)
+    return render_template('admin/delete_genre.html',genre=genre)
+
+## this routes confirms the deletion of genre
+@app.route('/confirm/delete/genre/<int:id>/')
+def confirm_delete_genre(id):
+    genre = Genre.query.get(id)
+
+    if genre:
+        db.session.delete(genre)
+        db.session.commit()
+    
+    flash('Genre has been deleted')
+    return redirect('/admin/genres/')

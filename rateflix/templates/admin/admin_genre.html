@@ -26,8 +26,8 @@
                                         <td>{{ loop.index }}</td>
                                         <td>{{ g.genre_name }}</td>
                                         <td>
-                                            <a href="" class="btn btn-primary">Update</a>
-                                            <a href="" class="btn btn-danger" >Delete</a>
+                                            <!-- <a href="" class="btn btn-primary">Update</a> -->
+                                            <a href="/admin/delete/genre/{{ g.genre_id }}/" class="btn btn-danger" >Delete</a>
                                         </td>
                                     </tr>
                                 {% endfor %}
