@@ -15,6 +15,74 @@ def admin_movies():
     # movie_genre = db.session.query(MovieGenre).all()
     return render_template('admin/all_movies.html', movies=movies)
 
+##route for admin to add a movie
+@app.route('/admin/addmovie/',methods=['GET','POST'])
+def admin_add_movie():
+    actor = Actor.query.all()
+    producer = Producer.query.all()
+    studio =Studio.query.all()
+    genre = Genre.query.all()
+    movieform = MovieForm()
+
+    if movieform.validate_on_submit():
+            title = request.form.get('title')
+            release_date= request.form.get('release_date')
+            summary = request.form.get('description')
+            movie_actor = request.form.get('actor')
+            movie_producer=request.form.get('producer')
+            movie_studio = request.form.get('studio')
+            movie_genre = request.form.getlist('genre')
+            poster = request.files.get('poster')
+            trailer = request.files.get('trailer')
+
+            poster_name, extension1 = None, None
+            trailer_name, extension2 = None, None
+            
+            ##checking if the poster was provided
+            if poster and poster.filename:
+                poster_filename = poster.filename
+                poster_ext = os.path.splitext(poster_filename)
+                extension1 = poster_ext[-1]
+        
+                ##generating new names
+                poster_name = secrets.token_hex(10)
+                poster.save("rateflix/static/uploads/poster/"+poster_name+extension1)
+               
+            
+            ##checking if the trailer was provided
+            if trailer and trailer.filename:
+                trailer_filename = trailer.filename
+                trailer_ext = os.path.splitext(trailer_filename)
+                extension2 = trailer_ext[-1]
+
+                trailer_name = secrets.token_hex(10)
+                trailer.save("rateflix/static/uploads/trailers/"+trailer_name+extension2)
+                
+
+            movie_details = Movie(movie_title=title,producer_id=movie_producer,movie_release_date=release_date,movie_description=summary,production_studio=movie_studio,movie_poster=poster_name+extension1 if poster and poster.filename else None, movie_trailer=trailer_name + extension2 if trailer and trailer.filename else None )
+
+            db.session.add(movie_details)
+            db.session.commit()
+
+            movie_id = movie_details.movie_id	
+
+            if movie_actor:  # Ensure there is an actor ID provided
+                movie_actor_data = MovieActor(movie_id=movie_id, actor_id=movie_actor)
+                db.session.add(movie_actor_data)
+                db.session.commit()
+
+            if movie_genre:
+                for g in movie_genre:
+                    movie_genre_data = MovieGenre(movie_id=movie_id,genre_id=int(g))
+                    db.session.add(movie_genre_data)
+
+            db.session.commit()
+
+            flash('Movie has been succesfully added')
+            return redirect('/admin/movies/')
+
+    return render_template('admin/admin_add_movie.html', movieform=movieform,actor=actor,producer=producer,studio=studio,genre=genre)
+
 ##admin can update the values of a movie in this route
 @app.route('/admin/movie/update/<int:id>/', methods=['GET','POST'])
 def update_movies(id):

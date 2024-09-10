@@ -41,6 +41,7 @@
 
             <label for="actor">Actor</label>
             <select name="actor" id="actor" class="form-select mb-3">
+                <option value=""> Select an actor </option>
                 {% for a in actor %}
                     <option value="{{ a.actor_id }}"> {{ a.actor_name }} </option>
                 {% endfor %}
@@ -49,6 +50,7 @@
 
             {{ movie.producer.label }}
             <select name="producer" id="producer" class="form-select mb-3">
+                <option value=""> Select a producer </option>
                 {% for p in producer %}
                     <option value="{{ p.producer_id }}"> {{ p.producer_name }} </option>
                 {% endfor %}
@@ -56,11 +58,13 @@
 
             {{ movie.studio.label }}
             <select name="studio" id="studio" class="form-select mb-3">
+                <option value=""> Select a Studio </option>
                 {% for s in studio %}
                     <option value="{{ s.studio_id }}"> {{ s.studio_name }} </option>
                 {% endfor %}
             </select>
 
+            <label class="d-block">Genre</label>
             {% for g in genre %}
                 <input type="checkbox" name="genre"  value="{{ g.genre_id }}" class="form-check-input mb-2" >
                 <label> {{ g.genre_name }}</label>
