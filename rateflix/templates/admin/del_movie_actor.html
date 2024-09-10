@@ -2,7 +2,13 @@
 {% block admincontent %}
     <!-- Main Content -->
                 <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Delete {{ actors.actor.actor_name }} </h1>
+
+                    {% if actors %}
+                        <h1 class="my-4">Delete {{ actors.actor.actor_name }}</h1>
+                    {% else %}
+                        <h1 class="my-4">Actor not found</h1>
+                    {% endif %}
+                    
                     
                     <h3>Are you sure you want to delete</h3>
                     <a href="/admin/movie/actors/{{ movie.movie_id }}/" class="btn btn-primary">No</a>

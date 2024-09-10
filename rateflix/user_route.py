@@ -114,6 +114,7 @@ def user_login():
 def user_logout():
     if session.get('member_id') != None:
         session.pop('member_id')
+        
     flash('You are now logged out','success')
     return redirect('/')
 
