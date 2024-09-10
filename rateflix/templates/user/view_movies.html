@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row mt-5">
+        <div class="col-md-6 offset-3">
+            <h1>View Movies</h1>
+             {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="alert alert-danger"> {{ message }} </p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <table class="table table-stripped">
+                <thead>
+                    <tr>
+                        <td>S/N</td>
+                        <td>Name</td>
+                        <td>Status</td>
+                        <td>Activity</td>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for m in movie  %}
+                        <tr>
+                            <td> {{ loop.index }} </td>
+                            <td> {{ m.movie_title }} </td>
+                            <td>
+                                {% if m.movie_status == 'pending' %}
+                                    <button class="btn btn-warning ">Pending</button>
+                                {% elif m.movie_status == 'approved' %}
+                                    <button class="btn btn-success " >Approved</button>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if m.movie_status == 'pending' %}
+                                    <a  href="/user/movie/update/{{ m.movie_id }}/" class="btn btn-primary">Update</a>
+                                {% elif m.movie_status == 'approved' %}
+                                    <button class="btn btn-success disabled">Approved</button>
+                                {% endif %}
+                             </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        
+        </div>
+       
+    </div>
+{% endblock content %}

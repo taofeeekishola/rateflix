@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row mt-5">
+        <div class="col-md-6 offset-3">
+            <h1>Update {{ movie.movie_title }}</h1>
+             {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="alert alert-danger"> {{ message }} </p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+           <form method="post" novalidate>
+                 {{ movieform.csrf_token }}
+
+                {{ movieform.title.label }}
+                {{ movieform.title( value=movie.movie_title, class='form-control mb-3' ) }}
+                    {% if movieform.title.errors %}
+                    {% for error in movieform.title.errors %}
+                        <p class="text-danger" >{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+
+                {{ movieform.release_date.label }}
+                {{ movieform.release_date(class="form-control mb-3", value=movie.movie_release_date) }}
+                {% if movieform.release_date.errors %}
+                    {% for error in movieform.release_date.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+
+                {{ movieform.description.label }}
+                {{ movieform.description(class="form-control mb-3", value=movie.movie_description) }}
+                {% if movieform.description.errors %}
+                    {% for error in movieform.description.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+
+                <label for="actor">Actor</label>
+                <select name="actor" id="actor" class="form-select mb-3">
+                    <!-- Display movie actors first -->
+                    {% for movie_actor in movie.movie_actors %}
+                        <option value="{{ movie_actor.actor.actor_id }}">{{ movie_actor.actor.actor_name }} (Added)</option>
+                    {% endfor %}
+
+                    <!-- Display other actors, excluding those already in movie.movie_actors -->
+                    {% for actor in all_actors %}
+                        {% if actor.actor_id not in movie.movie_actors|map(attribute='actor.actor_id') %}
+                            <option value="{{ actor.actor_id }}">{{ actor.actor_name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                {{ movieform.producer.label }}
+                <select name="producer" id="producer" class="form-select mb-3">
+                    <option value="{{ movie.producer_id }}"> {{ movie.producer.producer_name }} (Currect) </option>
+                    {% for p in producers %}
+                        {% if p.producer_id != movie.producer_id %}
+                        <option value="{{ p.producer_id }}"> {{ p.producer_name }} </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                {{ movieform.studio.label }}
+                <select name="studio" id="studio" class="form-select mb-3">
+                    <option value="{{ movie.production_studio }}"> {{ movie.studio.studio_name }} (Current) </option>
+                    {% for s in studio %}
+                        {% if s.studio_id != movie.production_studio %}
+                            <option value="{{ s.studio_id }}"> {{ s.studio_name }} </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                {% set genre_ids = movie.genres | map(attribute='genre_id') | list %}
+                {% for g in genre %}
+                    {% if g.genre_id in genre_ids %}
+                        <input type="checkbox" name="genre" value="{{ g.genre_id }}" class="form-check-input mb-2" checked>
+                        <label>{{ g.genre_name }}</label>
+                    {% else %}
+                        <input type="checkbox" name="genre" value="{{ g.genre_id }}" class="form-check-input mb-2">
+                        <label>{{ g.genre_name }}</label>
+                    {% endif %}
+                {% endfor %}
+
+                {{ movieform.submit(class_="btn btn-primary mt-3 d-block") }}
+
+           </form>
+
+        
+        </div>
+       
+    </div>
+{% endblock content %}

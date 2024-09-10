@@ -212,5 +212,90 @@ def movie_info(id):
 
     return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews)
 
+
+@app.route('/user/movieadded/')
+def user_moviesadded():
+    data = session.get('member_id')
+    movie = Movie.query.filter(Movie.added_by == data)
+    if data != None:
+        user_session = get_user_byid(data)
+    else:
+        flash('You need to login')
+        return redirect('/user/login/')
+    
+    return render_template('user/view_movies.html',user_session=user_session , movie=movie)
+
+@app.route('/user/movie/update/<int:id>/', methods=['GET','POST'])
+def user_update_movie(id):
+    movie = Movie.query.get(id)
+    actors = db.session.query(Actor).all()
+    producers = db.session.query(Producer).all()
+    studio = db.session.query(Studio).all()
+    genre = db.session.query(Genre).all()
+    data = session.get('member_id')
+    movieform = MovieForm()
+    if data != None:
+        user_session = get_user_byid(data)
+
+
+        if movieform.validate_on_submit():
+            title = request.form.get('title')
+            release_date= request.form.get('release_date')
+            summary = request.form.get('description')
+            movie_actor = request.form.get('actor')
+            movie_producer=request.form.get('producer')
+            movie_studio = request.form.get('studio')
+            movie_genre = request.form.getlist('genre')
+           
+
+            ##updating data in the database
+            movie.movie_title = title
+            movie.movie_release_date = release_date
+            movie.movie_description = summary
+            movie.production_studio = movie_studio
+            movie.producer_id = movie_producer
+
+            # Get all existing actors related to the movie
+            movieactors = MovieActor.query.filter_by(movie_id=id).all()
+
+            # Create a set of existing actor IDs for the current movie
+            existing_actor_ids = {ma.actor_id for ma in movieactors}
+
+            # List of actor IDs to add (assuming 'movie_actor' is a list of actor IDs from the form)
+            for actor_id in movie_actor: 
+                actor_id = int(actor_id)  
+
+                # Check if the actor is already related to the movie
+                if actor_id not in existing_actor_ids:
+                    # Actor is not yet added to this movie, so add it
+                    new_movie_actor = MovieActor(movie_id=id, actor_id=actor_id)
+                    db.session.add(new_movie_actor)
+
+            ##this checks if the movie already has genres before updating
+            moviegenres = MovieGenre.query.filter_by(movie_id=id).all()
+
+            # Create a set of existing genre IDs for the current movie
+            existing_genre_ids = {mg.genre_id for mg in moviegenres}
+
+            # Loop through the genre IDs provided in the form (assuming movie_genre is a list of genre IDs)
+            for genre_id in movie_genre:
+                genre_id = int(genre_id)  
+
+                # Check if the genre is already related to the movie
+                if genre_id not in existing_genre_ids:
+                    # Genre is not yet added to this movie, so add it
+                    new_movie_genre = MovieGenre(movie_id=id, genre_id=genre_id)
+                    db.session.add(new_movie_genre)
+
+            db.session.commit()
+            flash('Movie has been updated')
+            return redirect('/user/movieadded/')
+
+    else:
+        flash('You need to login')
+        return redirect('/user/login/')
+    
+    return render_template('user/user_update_movie.html',movie=movie,user_session=user_session,movieform=movieform,all_actors=actors,producers=producers,studio=studio,genre=genre)
+
     
 

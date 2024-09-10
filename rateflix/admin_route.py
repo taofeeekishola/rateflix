@@ -399,38 +399,45 @@ def add_actors():
     if data != None:
         admin_session = get_user_byid(data)
         ## checking if actors exists
-    if details.validate_on_submit():
-        name = request.form.get('name')
-        bio = request.form.get('bio')
-        picture = request.files.get('picture')
 
-        actor_photo = 'default_actor.jpg'
+        if details.validate_on_submit():
+            name = request.form.get('name')
+            bio = request.form.get('bio')
+            picture = request.files.get('picture')
+            
 
-        if picture and picture.filename != '':
-            ##getting the filenames
-            actor_filename = picture.filename
+            existing_actor = Actor.query.filter(Actor.actor_name == name).first()
 
-            actor_ext = os.path.splitext(actor_filename)
-            extension = actor_ext[-1]
+            if existing_actor:
+
+                flash('Actor already exists')
+                return redirect('/admin/actors/')
+            else:
+                actor_photo = 'default_actor.jpg'
+
+                if picture and picture.filename != '':
+                    ##getting the filenames
+                    actor_filename = picture.filename
+
+                    actor_ext = os.path.splitext(actor_filename)
+                    extension = actor_ext[-1]
+                
+                    ##generating new names
+                    actor_name = secrets.token_hex(10)
+                    picture.save("rateflix/static/uploads/actors/"+actor_name+extension)
+                    actor_photo = actor_name+extension
+
+                actors = Actor(actor_name=name,actor_bio=bio,actor_photo=actor_photo)
+
+                db.session.add(actors)
+                db.session.commit()
+
+                flash('Actor has been added')
+                return redirect('/admin/actors/')
+        else:
+            flash('You need to be logged in as an admin')
+            return redirect('/admin/login/')
         
-            ##generating new names
-            actor_name = secrets.token_hex(10)
-            picture.save("rateflix/static/uploads/actors/"+actor_name+extension)
-            actor_photo = actor_name+extension
-
-        actors = Actor(actor_name=name,actor_bio=bio,actor_photo=actor_photo)
-
-        db.session.add(actors)
-        db.session.commit()
-
-        flash('Actor has been added')
-        return redirect('/admin/actors/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-
-
     return render_template('admin/add_actor.html',details=details,admin_session=admin_session)
 
 ## route for updating actor details
@@ -618,13 +625,20 @@ def add_genre():
         if genre.validate_on_submit():
             name = request.form.get('name')
 
-            genredetails = Genre(genre_name=name)
-            
-            db.session.add(genredetails)
-            db.session.commit()
+            existing_genre = Genre.query.filter(Genre.genre_name == name).first()
 
-            flash('Genre has been added')
-            return redirect('/admin/genres/')
+            ## checking if the genre exists in the database already
+            if existing_genre:
+                flash('Genre already exists')
+                return redirect('/admin/genres/')
+            else:
+                genredetails = Genre(genre_name=name)
+                
+                db.session.add(genredetails)
+                db.session.commit()
+
+                flash('Genre has been added')
+                return redirect('/admin/genres/')
     else:
         flash('You need to be logged in as an admin')
         return redirect('/admin/login/')

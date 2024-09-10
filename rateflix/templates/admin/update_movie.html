@@ -47,7 +47,7 @@
 
                         {{ movieform.producer.label }}
                         <select name="producer" id="producer" class="form-select mb-3">
-                            <option value="{{ movie.producer_id }}"> {{ movie.producer.producer_name }} </option>
+                            <option value="{{ movie.producer_id }}"> {{ movie.producer.producer_name }} Currect </option>
                             {% for p in producers %}
                                 {% if p.producer_id != movie.producer_id %}
                                 <option value="{{ p.producer_id }}"> {{ p.producer_name }} </option>

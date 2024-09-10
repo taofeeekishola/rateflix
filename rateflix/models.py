@@ -23,7 +23,7 @@ class Member(db.Model):
     received_requests = db.relationship('Friendship', foreign_keys='Friendship.request_to', back_populates='receiver')
     notifications = db.relationship('Notification', back_populates='receiver')
     comment_likes = db.relationship('CommentLike', back_populates='member')
-    movies = db.relationship('Movie',back_populates='added')
+    movies = db.relationship('Movie', back_populates='added_by_member')
     
 
 
@@ -53,7 +53,7 @@ class Movie(db.Model):
     watchlist_movies = db.relationship('WatchlistMovie', back_populates='movie')
     movie_actors = db.relationship('MovieActor', back_populates='movie')
     studio = db.relationship('Studio', back_populates='movie')
-    added = db.relationship('Member', back_populates='member')
+    added_by_member = db.relationship('Member', back_populates='movies')
 
 
 class Genre(db.Model):
