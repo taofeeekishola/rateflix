@@ -13,22 +13,19 @@
                                 <td>Username</td>
                                 <td>Email</td>
                                 <td>Date Joined</td>
-                                <td></td>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for u in user %}
                             <tr>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td>
-                                    <button class="btn btn-danger">Delete</button>
-                                    <button class="btn btn-primary">Update</button>
-                                </td>
+                                <td> {{ loop.index }} </td>
+                                <td> {{ u.member_firstname }} </td>
+                                <td> {{ u.member_lastname }} </td>
+                                <td> {{ u.member_username }} </td>
+                                <td> {{ u.member_email }} </td>
+                                <td> {{ u.member_join_date }}</td>
                             </tr>
+                            {% endfor %}
                         </tbody>
                    </table>
                 </div>

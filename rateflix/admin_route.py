@@ -14,6 +14,7 @@ def get_user_byid(id):
 ## this is the route that displays the user details
 @app.route('/admin/')
 def admin():
+    user = Member.query.all()
     data = session.get('admin_id')
     if data != None:
         admin_session = get_user_byid(data)
@@ -21,7 +22,7 @@ def admin():
         flash('You need to be logged in as an admin')
         return redirect('/admin/login/')
     
-    return render_template('admin/admin.html',admin_session=admin_session)
+    return render_template('admin/admin.html',admin_session=admin_session, user=user)
 
 ##route to allow the admin login
 @app.route('/admin/login/', methods=['GET','POST'])

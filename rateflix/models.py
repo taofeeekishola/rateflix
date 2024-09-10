@@ -23,6 +23,7 @@ class Member(db.Model):
     received_requests = db.relationship('Friendship', foreign_keys='Friendship.request_to', back_populates='receiver')
     notifications = db.relationship('Notification', back_populates='receiver')
     comment_likes = db.relationship('CommentLike', back_populates='member')
+    movies = db.relationship('Movie',back_populates='added')
     
 
 
@@ -43,6 +44,7 @@ class Movie(db.Model):
     movie_trailer = db.Column(db.String(255))
     movie_status = db.Column(db.Enum('pending', 'approved'), nullable=False, default='pending')
     production_studio = db.Column(db.Integer, db.ForeignKey('studio.studio_id'))
+    added_by = db.Column(db.Integer, db.ForeignKey('member.member_id'))
 
     producer = db.relationship('Producer', back_populates='movies')
     genres = db.relationship('MovieGenre', back_populates='movie')
@@ -51,6 +53,7 @@ class Movie(db.Model):
     watchlist_movies = db.relationship('WatchlistMovie', back_populates='movie')
     movie_actors = db.relationship('MovieActor', back_populates='movie')
     studio = db.relationship('Studio', back_populates='movie')
+    added = db.relationship('Member', back_populates='member')
 
 
 class Genre(db.Model):
