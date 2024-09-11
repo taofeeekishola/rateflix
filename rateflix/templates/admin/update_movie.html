@@ -21,7 +21,7 @@
                             {% endfor %}
                         {% endif %}
 
-                        {{ movieform.description(class="form-control mb-3", value=movie.movie_description) }}
+                        <textarea>{{movie.movie_description }} </textarea>
                         {% if movieform.description.errors %}
                             {% for error in movieform.description.errors %}
                                 <p>{{ error }}</p>

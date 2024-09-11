@@ -437,8 +437,8 @@ def add_actors():
         else:
             flash('You need to be logged in as an admin')
             return redirect('/admin/login/')
-        
-    return render_template('admin/add_actor.html',details=details,admin_session=admin_session)
+    else:
+        return render_template('admin/add_actor.html')
 
 ## route for updating actor details
 @app.route('/admin/actors/update/<int:id>/',methods=['GET','POST'])

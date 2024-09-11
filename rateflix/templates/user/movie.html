@@ -229,23 +229,29 @@
               <form  method="post" >
 
                 {{ review.csrf_token }}
-
+                <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
                 {{ review.review(class='form-control mb-2', placeholder='My Review' )}}
-                {{ review.submit_review(class='btn btn-primary') }}
+                {{ review.submit_review(class='btn btn-primary') }} 
+
+                
               </form>
             </div>
          </div>
 
+         
          <!--all the comments-->
          <div class="row mt-5">
             <div class="col-md-12">
-              {% if all_reviews %}
+             <div id="reviews-section" >
+                <p id="show" ></p>
+                 {% if all_reviews %}
                 {% for reviews in all_reviews %}
                   <p> {{ reviews.review_content }} {{ reviews.review_date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                 {% endfor %}
               {% else %}
                 <p class="alert alert-primary"> No Reviews Avaliable </p>
               {% endif %}
+             </div>
             </div>
          </div>
 {% endblock %}
@@ -253,48 +259,50 @@
 {% block scripts %}
          <script>
           //this means the user did not rate
-          var ratedIndex = -1;
             $(document).ready(function(){
+              
+              $('#submit_review').click(function(event){
+                event.preventDefault();
+                var review = $('#review').val();
+                var movieId = $('#movie').val();
+                var csrfToken = $('input[name="csrf_token"]').val();
 
-              // $('.myrate').click(function(){
-              //     ratedIndex = parseInt($(this).data('index'));
+                $.ajax({
+                  url: '/ajax/movie/review/',
+                  type:'POST',
+                  data: {reviewData:review,movieId:movieId, csrf_token: csrfToken},
+
+                  success: function(resp){
+                   $('#show').prepend('<p>' + resp.review_content + ' ' + resp.review_date + '</p>');
+
+                // Optionally, clear the input field
+                $('#review').val('');
+                  },
+                  error: function(err){
+                    console.log(err);
+                  }
+                })
+              })
+              
+             
+              // var rating_data = 0
+              // $('.myrate').mouseenter(function(){
+              //   var rating = $(this).data('rating');
+
+              //   for(var count = 0; count <= rating; count++){
+              //     $('#submit_star_'+count ).css('color','gold');
+              //   }
               // });
 
-              // $('.myrate').mouseover(function(){
-              //   var currentIndex = parseInt($(this).data('index'));
+              // $('.myrate').mouseleave(function() {
+                  
+              //     var defaultColor = ''; 
+              //     var rating = $(this).data('rating'); 
 
-              //    for (var i = 0; i <= currentIndex; i++) {
-              //       $(".myrate:eq(" + i + ")").css('color', 'gold');
+              //     for (var count = 0; count <= rating; count++) {
+              //         $('#submit_star_' + count).css('color', defaultColor);
               //     }
               // });
-              
-              // $('.myrate').mouseleave(function(){
-              //     $(this).css('color','black');
-
-              //     if (ratedIndex != -1){
-              //       for (var i = 0; i <= ratedIndex; i++) {
-              //         $(".myrate:eq(" + i + ")").css('color', 'gold');
-              //       }
-              //     } 
-              // });
-              var rating_data = 0
-              $('.myrate').mouseenter(function(){
-                var rating = $(this).data('rating');
-
-                for(var count = 0; count <= rating; count++){
-                  $('#submit_star_'+count ).css('color','gold');
-                }
-              });
-
-              $('.myrate').mouseleave(function() {
-                  
-                  var defaultColor = ''; 
-                  var rating = $(this).data('rating'); 
-
-                  for (var count = 0; count <= rating; count++) {
-                      $('#submit_star_' + count).css('color', defaultColor);
-                  }
-              });
             });
          </script>
 {% endblock %}

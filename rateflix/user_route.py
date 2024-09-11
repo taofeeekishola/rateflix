@@ -1,4 +1,4 @@
-from flask import render_template,request,redirect,flash,url_for,session
+from flask import render_template,request,redirect,flash,url_for,session,jsonify
 from werkzeug.security import generate_password_hash,check_password_hash
 import timeago
 from rateflix import app
@@ -194,25 +194,49 @@ def movie_info(id):
     if data != None:
         user_session = get_user_byid(data)
 
-        if review.validate_on_submit():
-
-            print('Form is validating')
-            review_content  = request.form.get('review')
-            user_review = Review(member_id=data,movie_id=id,review_content=review_content )
-
-            db.session.add(user_review)
-            db.session.commit()
-
-            # all_reviews = db.session.query(Review).all()
-
-            return redirect(url_for('movie_info', id=id))
     else:
         user_session = None
-    all_reviews = db.session.query(Review).filter(Review.movie_id == id).all()
+    all_reviews = db.session.query(Review).filter(Review.movie_id == id).order_by(Review.review_date.desc()).all()
 
     return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews)
 
+@app.route('/ajax/movie/review/',methods=['POST'])
+def submit_review():
+    review = request.form.get('reviewData')
+    movieid = request.form.get('movieId')
+    data = session.get('member_id')
 
+    user_review = Review(member_id=data, movie_id=movieid, review_content=review)
+    db.session.add(user_review)
+    db.session.commit()
+
+    all_reviews = Review.query.filter(Review.movie_id == movieid).all()
+
+ 
+    # Return only the newly submitted review
+    return jsonify({
+        'review_content': user_review.review_content,
+        'review_date': user_review.review_date.strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+
+# # Route to handle AJAX submission of reviews
+# @app.route('/movie/submit_review/<int:id>', methods=['POST'])
+# def submit_review(id):
+#     review_content = request.form.get('review')
+#     data = session.get('member_id')
+
+#     if data and review_content:  # Ensure the user is logged in and review isn't empty
+#         user_review = Review(member_id=data, movie_id=id, review_content=review_content)
+#         db.session.add(user_review)
+#         db.session.commit()
+
+#     all_reviews = Review.query.filter(Review.movie_id == id).all()
+
+#     # Render partial HTML for reviews to be updated via AJAX
+#     return render_template('partials/reviews.html', all_reviews=all_reviews)
+
+#route to see all the movies user has added
 @app.route('/user/movieadded/')
 def user_moviesadded():
     data = session.get('member_id')
@@ -225,6 +249,7 @@ def user_moviesadded():
     
     return render_template('user/view_movies.html',user_session=user_session , movie=movie)
 
+# route where user can update movies they have added
 @app.route('/user/movie/update/<int:id>/', methods=['GET','POST'])
 def user_update_movie(id):
     movie = Movie.query.get(id)
