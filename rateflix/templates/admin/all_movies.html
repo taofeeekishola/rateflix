@@ -56,11 +56,8 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if movie.movie_status == 'pending' %}
-                                        <button class="btn btn-warning ">Pending</button>
-                                    {% elif movie.movie_status == 'approved' %}
-                                        <button class="btn btn-success " >Approved</button>
-                                    {% endif %}
+                                    <button class="btn btn-warning state" data-status="{{ movie.movie_id }}">{{ movie.movie_status }}</button>
+
                                 </td>
                                 <td>
                                     <a  href="/admin/movie/update/{{ movie.movie_id }}/" class="btn btn-primary">Update</a>
@@ -77,6 +74,25 @@
 {% endblock %}
 {% block adminscript %} 
     <script>
-      
+      $(document).ready(function(){
+        $('.state').click(function(){
+            var curStatus = $(this).text()
+            var movieid = $(this).data('status');
+            var csrfToken = "{{ csrf_token() }}";
+
+            $.ajax({
+                url:'/admin/update_movie_status/',
+                type:'POST',
+                data: {status:curStatus,movieid:movieid,csrf_token: csrfToken},
+
+                success: function(resp){
+                    $(this).html(resp)
+                },
+                error: function(err){
+                    console.log(err)
+                }
+        });
+    });
+      });
     </script>
 {% endblock %}

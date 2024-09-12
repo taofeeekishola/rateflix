@@ -1,5 +1,5 @@
 import os,secrets
-from flask import render_template,redirect,flash,request,session,url_for
+from flask import render_template,redirect,flash,request,session,url_for, jsonify
 
 from rateflix import app
 from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail,GenreDetail
@@ -437,8 +437,8 @@ def add_actors():
         else:
             flash('You need to be logged in as an admin')
             return redirect('/admin/login/')
-    else:
-        return render_template('admin/add_actor.html')
+    
+    return render_template('admin/add_actor.html',admin_session=admin_session,details=details)
 
 ## route for updating actor details
 @app.route('/admin/actors/update/<int:id>/',methods=['GET','POST'])
@@ -670,3 +670,32 @@ def confirm_delete_genre(id):
     
     flash('Genre has been deleted')
     return redirect('/admin/genres/')
+
+@app.route('/admin/update_movie_status/', methods=['POST'])
+def update_movie_status():
+    movie_id = request.form.get('movieid')
+    new_status = request.form.get('status')
+
+    
+    movie = Movie.query.get(movie_id)
+    if new_status == 'pending':
+        movie.movie_status = 'approved'
+        db.session.commit()
+        button_class = 'btn btn-success'
+        return f"""
+                    <td>
+                       <button class="{button_class} state" data-status="{movie.movie_id }">{ movie.movie_status }</button>
+                    </td>
+                """
+    elif new_status == 'approved':
+        movie.movie_status = 'pending'
+        db.session.commit()
+        button_class = 'btn btn-warning'
+        return f"""
+                    <td>
+                        <button class="{button_class} state" data-status="{movie.movie_id }">{ movie.movie_status }</button>
+                    </td>
+                """
+
+   
+   

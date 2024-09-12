@@ -14,8 +14,8 @@
                             {% endfor %}
                         {% endif %}
 
-
-                        {{ details.bio(class_='form-control mb-3', placeholder='Bio', value=actor.actor_bio)  }}
+                        <textarea class="form-control mb-3" id="bio" name="bio"> {{actor.actor_bio }} </textarea>
+                        
 
                         
                         {{ details.picture(class_='form-control mb-3') }}

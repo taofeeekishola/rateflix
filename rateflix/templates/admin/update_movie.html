@@ -6,7 +6,8 @@
                     
                     <form action="" method="post" novalidate enctype="multipart/form-data">
                         {{ movieform.csrf_token }}
-
+                        
+                        {{ movieform.title.label }}
                         {{ movieform.title( value=movie.movie_title, class='form-control mb-3' ) }}
                          {% if movieform.title.errors %}
                             {% for error in movieform.title.errors %}
@@ -14,6 +15,7 @@
                             {% endfor %}
                         {% endif %}
 
+                        {{ movieform.release_date.label }}
                         {{ movieform.release_date(class="form-control mb-3", value=movie.movie_release_date) }}
                         {% if movieform.release_date.errors %}
                             {% for error in movieform.release_date.errors %}
@@ -21,7 +23,9 @@
                             {% endfor %}
                         {% endif %}
 
-                        <textarea>{{movie.movie_description }} </textarea>
+                        {{ movieform.description.label }}
+                        <textarea class="form-control mb-3" id="description" name="description"> {{movie.movie_description }} </textarea>
+                         {{ movieform.description(class="form-control mb-3", value=movie.movie_release_date) }}
                         {% if movieform.description.errors %}
                             {% for error in movieform.description.errors %}
                                 <p>{{ error }}</p>
