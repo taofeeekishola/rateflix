@@ -1,9 +1,10 @@
 from flask import render_template,request,redirect,flash,url_for,session,jsonify
 from werkzeug.security import generate_password_hash,check_password_hash
+from sqlalchemy import extract
 import timeago
 from rateflix import app
 from rateflix.forms import Register,Login,MovieForm,MovieReview
-from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review
+from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review,Rating
 
 ##funcion to always retrive the user id
 def get_user_byid(id):
@@ -23,13 +24,6 @@ def home():
         user_session = None
 
     return render_template('user/index.html' ,user_session=user_session,movies=movies,genres=genres,studio=studio)
-
-## this is the filter route
-@app.route('/movie/filter/')
-def filters():
-    movies = Movie.query.all()
-
-
 
 ##this checks if the username already exists in the database and displays the options using ajax
 @app.route('/user/valusername/')
@@ -108,7 +102,6 @@ def user_login():
 
     return render_template('user/login.html' ,login=login)
 
-
 ##this logs the user out
 @app.route('/user/logout/')
 def user_logout():
@@ -117,7 +110,6 @@ def user_logout():
         
     flash('You are now logged out','success')
     return redirect('/')
-
 
 """THE USERPAGE VIEWS"""
 @app.route('/user/profile/')
@@ -186,6 +178,14 @@ def movie_info(id):
     movies = Movie.query.get(id)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
+    ratings = Rating.query.filter(Rating.movie_id == id).all()
+
+    if ratings:
+        total_ratings = sum(r.rating_score for r in ratings)
+        average_rating = total_ratings / len(ratings)
+    else:
+        average_rating = 0
+  
 
     ##user review form
     review = MovieReview()
@@ -198,7 +198,7 @@ def movie_info(id):
         user_session = None
     all_reviews = db.session.query(Review).filter(Review.movie_id == id).order_by(Review.review_date.desc()).all()
 
-    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews)
+    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating)
 
 @app.route('/ajax/movie/review/',methods=['POST'])
 def submit_review():
@@ -220,22 +220,6 @@ def submit_review():
     })
 
 
-# # Route to handle AJAX submission of reviews
-# @app.route('/movie/submit_review/<int:id>', methods=['POST'])
-# def submit_review(id):
-#     review_content = request.form.get('review')
-#     data = session.get('member_id')
-
-#     if data and review_content:  # Ensure the user is logged in and review isn't empty
-#         user_review = Review(member_id=data, movie_id=id, review_content=review_content)
-#         db.session.add(user_review)
-#         db.session.commit()
-
-#     all_reviews = Review.query.filter(Review.movie_id == id).all()
-
-#     # Render partial HTML for reviews to be updated via AJAX
-#     return render_template('partials/reviews.html', all_reviews=all_reviews)
-
 #route to see all the movies user has added
 @app.route('/user/movieadded/')
 def user_moviesadded():
@@ -252,6 +236,7 @@ def user_moviesadded():
 # route where user can update movies they have added
 @app.route('/user/movie/update/<int:id>/', methods=['GET','POST'])
 def user_update_movie(id):
+
     movie = Movie.query.get(id)
     actors = db.session.query(Actor).all()
     producers = db.session.query(Producer).all()
@@ -322,5 +307,79 @@ def user_update_movie(id):
     
     return render_template('user/user_update_movie.html',movie=movie,user_session=user_session,movieform=movieform,all_actors=actors,producers=producers,studio=studio,genre=genre)
 
-    
+##route for filtering movies
+@app.route('/ajax/movie/filter/', methods=['GET'])
+def filter_movies():
+    year = request.args.get('year')
+    genre = request.args.get('genre')
+    studio = request.args.get('studio')
 
+    movies = []
+    
+    if not year and not genre and not studio:
+        movies = Movie.query.all() 
+    
+    if year:
+        movies = Movie.query.filter(extract('year', Movie.movie_release_date) == int(year)).all()
+
+    if genre:
+        movies = Movie.query.join(MovieGenre).filter(MovieGenre.genre_id == int(genre)).all()
+
+
+    if studio:
+        movies = Movie.query.filter(Movie.production_studio == int(studio)).all()
+    
+    if not movies:
+        return '<p>No movies found matching the criteria.</p>'
+    
+    movie_html = ''.join(
+    f'''
+    <div class="col-6 col-md-4 col-lg-2 mb-4">
+        <div class="card card-custom">
+            <a href="/movie/info/{movie.movie_id}"><img src="/static/uploads/poster/{movie.movie_poster}" class="card-img-top" alt="{movie.movie_poster}"></a>
+            <div class="card-body">
+                <a href="/movie/info/{movie.movie_id}"><p class="card-title mb-2">{movie.movie_title}</p></a>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <p class="card-text mb-0"></p>
+                </div>
+                <div class="d-flex justify-content-center align-items-center">
+                    <a href="/movie/info/{movie.movie_id}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
+                    <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    ''' for movie in movies
+    )
+
+    return movie_html
+    
+   
+
+
+##route to submit movie rating
+@app.route('/user/submitrating/', methods=['POST'])
+def user_rating():
+    try:
+        rating = request.form.get('rating')
+        movieid = request.form.get('movieId')
+        data = session.get('member_id')
+
+        if not rating or not movieid or not data:
+            raise ValueError("Missing data")
+        
+        # Check if the user has already rated this movie
+        existing_rating = Rating.query.filter_by(member_id=data, movie_id=movieid).first()
+        if existing_rating:
+            return jsonify({'error': 'You have already rated this movie'}), 400
+
+        user_rating = Rating(member_id=data, movie_id=movieid, rating_score=rating)
+        db.session.add(user_rating)
+        db.session.commit()
+
+        return jsonify({'message': f'Rating {rating} received successfully!'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+    
+   

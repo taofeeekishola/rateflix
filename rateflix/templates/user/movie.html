@@ -6,24 +6,35 @@
            <div class="col-md-6">
               <h1 class="h3 sub-heading"> {{ movies.movie_title }} </h1>
               <div class="d-flex mb-2">
-                  <p class="mb-1 me-3"><strong>Year:</strong> 2024</p>
-                  <p class="mb-1 me-3"><strong>Rating:</strong> PG-13</p>
-                  <p class="mb-1"><strong>Duration:</strong> 1h 39m</p>
+                  <p class="mb-1 me-3"><strong>Year:</strong> {{ movies.movie_release_date.strftime('%Y') }}</p>
               </div>
           </div>
           <!-- Ratings and Popularity -->
           <div class="col-md-6">
               <div class="d-flex flex-row justify-content-between">
-                  <p class="mb-1"><strong>Ratflex Rating:</strong> 7/10 <i class="fa-solid fa-star"></i></p>
+                
+                  <p class="mb-1"><strong>Ratflex Rating:</strong> {{ average_rating }}/5</i></p>
+                  {% if session.get('member_id') != None %}
                   <p class="mb-1"><strong>Your Rating:</strong>
-                      <i class="fa-solid fa-star myrate" id="submit_star_1" data-rating="1" ></i>
-                      <i class="fa-solid fa-star myrate" id="submit_star_2" data-rating="2"></i>
-                      <i class="fa-solid fa-star myrate" id="submit_star_3" data-rating="3"></i>
-                      <i class="fa-solid fa-star myrate" id="submit_star_4" data-rating="4"></i>
-                      <i class="fa-solid fa-star myrate" id="submit_star_5" data-rating="5"></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_1" data-rating="1" ></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_2" data-rating="2"></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_3" data-rating="3"></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_4" data-rating="4"></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_5" data-rating="5"></i>
                       
                   </p>
-                  <button class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+                  <button class="btn btn-outline-primary btn-sm" id="submit_rating">Submit</button>
+                  {% else %}
+                   <p class="mb-1"><strong>Your Rating:</strong>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_1" data-rating="1" ></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_2" data-rating="2"></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_3" data-rating="3"></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_4" data-rating="4"></i>
+                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_5" data-rating="5"></i>
+                      
+                  </p>
+                  <button class="btn btn-outline-primary btn-sm" id="submit_rating" disabled>Submit</button>
+                  {% endif %}
               </div>
           </div>
         </div>
@@ -70,13 +81,13 @@
                 <hr>
                 <p><strong>Director</strong> {{ movies.producer.producer_name }}</p>
                 <hr>
-                <p><strong>Writers</strong> Michael Sarnoski &nbsp;John Krasinski &nbsp; Bryan Woods</p>
+                <p><strong>Studio</strong> {{ movies.studio.studio_name }}</p>
             </div>
 
-            <div class="col-md-4">
+            {#<div class="col-md-4">
                 <h4>Where to Watch</h4>
                 <p>Still in theaters <i class="fa-solid fa-film"></i></p>
-            </div>
+            </div>#}
         </div>
 
            <!--Cast heading-->
@@ -227,12 +238,17 @@
          <div class="row">
             <div class="col-md-9">
               <form  method="post" >
-
-                {{ review.csrf_token }}
-                <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
-                {{ review.review(class='form-control mb-2', placeholder='My Review' )}}
-                {{ review.submit_review(class='btn btn-primary') }} 
-
+                {% if session.get('member_id') != None %}
+                  {{ review.csrf_token }}
+                  <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
+                  {{ review.review(class='form-control mb-2', placeholder='My Review' )}}
+                  {{ review.submit_review(class='btn btn-primary') }} 
+                {% else %}
+                    {{ review.csrf_token }}
+                    <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
+                    {{ review.review(class='form-control mb-2', placeholder='My Review', disabled=True )}}
+                    {{ review.submit_review(class='btn btn-primary', disabled=True) }}
+                {% endif %}
                 
               </form>
             </div>
@@ -242,18 +258,29 @@
          <!--all the comments-->
          <div class="row mt-5">
             <div class="col-md-12">
-             <div id="reviews-section" >
-                <p id="show" ></p>
-                 {% if all_reviews %}
-                {% for reviews in all_reviews %}
-                  <p> {{ reviews.review_content }} {{ reviews.review_date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                {% endfor %}
-              {% else %}
-                <p class="alert alert-primary"> No Reviews Avaliable </p>
-              {% endif %}
-             </div>
+                <div id="reviews-section">
+                    <p id="show"></p>
+                    {% if all_reviews %}
+                        {% for reviews in all_reviews %}
+                            <div class="card mb-3" style="max-width: 500px;">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ reviews.member.member_username }}</h5>
+                                    <p class="card-text">{{ reviews.review_content }}</p>
+                                    <footer class="blockquote-footer">
+                                        {{ reviews.review_date.strftime('%Y-%m-%d') }}
+                                    </footer>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-primary" role="alert">
+                            No Reviews Available
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-         </div>
+        </div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -285,24 +312,63 @@
               })
               
              
-              // var rating_data = 0
-              // $('.myrate').mouseenter(function(){
-              //   var rating = $(this).data('rating');
+              var rating_data = 0;
 
-              //   for(var count = 0; count <= rating; count++){
-              //     $('#submit_star_'+count ).css('color','gold');
-              //   }
-              // });
+              // Hover effect for stars
+              $('.submit-star').mouseenter(function() {
+                  var rating = $(this).data('rating');
+                  $('.submit-star').each(function() {
+                      if ($(this).data('rating') <= rating) {
+                          $(this).css('color', 'gold');
+                      } else {
+                          $(this).css('color', '');
+                      }
+                  });
+              }).mouseleave(function() {
+                  // Reset color after hover
+                  $('.submit-star').each(function() {
+                      if ($(this).data('rating') <= rating_data) {
+                          $(this).css('color', 'gold');
+                      } else {
+                          $(this).css('color', '');
+                      }
+                  });
+              });
 
-              // $('.myrate').mouseleave(function() {
+              // Click event to select rating
+              $('.submit-star').click(function() {
+                  rating_data = $(this).data('rating');
+                  $('.submit-star').each(function() {
+                      if ($(this).data('rating') <= rating_data) {
+                          $(this).css('color', 'gold');
+                      } else {
+                          $(this).css('color', '');
+                      }
+                  });
+              });
+
+              // Submit rating via AJAX to Flask route
+              $('#submit_rating').click(function() {
+                  if (rating_data === 0) {
+                      alert('Please select a rating before submitting.');
+                      return;
+                  }
                   
-              //     var defaultColor = ''; 
-              //     var rating = $(this).data('rating'); 
-
-              //     for (var count = 0; count <= rating; count++) {
-              //         $('#submit_star_' + count).css('color', defaultColor);
-              //     }
-              // });
+                  var movieId = $('#movie').val(); // Get the movie ID
+                  var csrfToken = $('input[name="csrf_token"]').val();
+                  $.ajax({
+                      url: '/user/submitrating/', // Flask route URL
+                      type: 'POST',
+                      data: { rating: rating_data, movieId: movieId,csrf_token: csrfToken }, // Send data as URL-encoded
+                      success: function(response) {
+                          alert('Rating submitted successfully: ' + response.message);
+                      },
+                      error: function(xhr, status, error) {
+                          console.error('Error details:', xhr.responseText);
+                          alert('An error occurred: ' + xhr.responseText);
+                      }
+                  });
+              });
             });
          </script>
 {% endblock %}

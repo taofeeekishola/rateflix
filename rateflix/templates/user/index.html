@@ -29,7 +29,11 @@
             </div>
         </div>
 
+        <!--filtering movies-->
         <div class="row">
+          <div class="col-md-12">
+              <p class="text-primary">Please pick only one filter</p>
+          </div>
             <div class="col-md-4">
                 <h4>Release Year</h4>
                 <select name="year" id="year" class="form-select mb-3">
@@ -61,8 +65,6 @@
                     {% endfor %}
                 </select>
             </div>
-            
-
         </div>
 
           <div class="row">
@@ -74,13 +76,13 @@
         <!--Popular in theater header-->
         <div class="row mt-5">
             <div class="col-md-12">
-                <h3 class="sub-heading">Popular Movies Showing In Theaters</h3>
+                <h3 class="sub-heading">Movies</h3>
             </div>
         </div>
 
         <!--Popular in theater-->
-       <div class="row">
-        {% if movies %}
+       <div class="row" id="movies">
+              {% if movies %}
           {% for movie in movies %}
             <div class="col-6 col-md-4 col-lg-2 mb-4">
               <div class="card card-custom">
@@ -108,7 +110,7 @@
         {% endif %}
         </div>
 
-      
+      {#
         <!--Currently streaming header-->
          <div class="row mt-5">
             <div class="col-md-6">
@@ -507,76 +509,34 @@
         </div>
 
         </div>
+        #}
 
 {% endblock content %}
 {% block scripts %}
     <script>
         $(document).ready(function(){
-    $('#filter').click(function(){
-        var year = $('#year').val();
-        var genre = $('#genre').val();
-        var studio = $('#studio').val();
+          $('#filter').click(function(){
+              var year = $('#year').val();
+              var genre = $('#genre').val();
+              var studio = $('#studio').val();
 
-        var data = {};
-        if (year) data.year = year;
-        if (genre) data.genre = genre;
-        if (studio) data.studio = studio;
+              var data = {};
+              if (year) data.year = year;
+              if (genre) data.genre = genre;
+              if (studio) data.studio = studio;
 
-        $.ajax({
-            url: '/movie/filter/',
-            type: 'GET',
-            data: data,
-            success: function(response) {
-                var movies = response.movies;
-                var html = '';
+              console.log(data)
+              $.ajax({
+                  url: '/ajax//movie/filter/',
+                  type: 'GET',
+                  data: data,
 
-                if (movies.length) {
-                    html = movies.map(movie => `
-                        <div class="col-6 col-md-4 col-lg-2 mb-4">
-                            <div class="card card-custom">
-                                ${movie.movie_poster ? 
-                                    `<a href="/movie/info/${movie.movie_id}">
-                                        <img src="/static/uploads/poster/${movie.movie_poster}" class="card-img-top" alt="${movie.movie_title}">
-                                    </a>` : 
-                                    `<a href="#">
-                                        <img src="/static/Images/dispicableme.jpg" class="card-img-top" alt="Default Movie Poster">
-                                    </a>`
-                                }
-                                <div class="card-body">
-                                    <a href="/movie/info/${movie.movie_id}">
-                                        <p class="card-title mb-2">${movie.movie_title}</p>
-                                    </a>
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <p class="card-text mb-0">
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                        </p>
-                                    </div>
-                                    <div class="d-flex justify-content-center align-items-center">
-                                        <a href="/movie/info/${movie.movie_id}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn">
-                                            <i class="fa-solid fa-play"></i> Trailer
-                                        </a>
-                                        <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn">
-                                            <i class="fa-solid fa-plus"></i> Watchlist
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    html = '<p class="col-12">No movies found.</p>';
-                }
-
-                // Insert the generated HTML into the container
-                $('.row').html(html);
-            },
-            error: function(err){
-                console.log(err);
-            }
+                  success:function(resp){
+                    $('#movies').html(resp)
+                  },
+                  error:function(err){
+                    console.log(err)
+                  }
         });
     });
 });
