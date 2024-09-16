@@ -399,7 +399,7 @@ def add_actors():
     if data != None:
         admin_session = get_user_byid(data)
         ## checking if actors exists
-
+        
         if details.validate_on_submit():
             name = request.form.get('name')
             bio = request.form.get('bio')
@@ -434,9 +434,9 @@ def add_actors():
 
                 flash('Actor has been added')
                 return redirect('/admin/actors/')
-        else:
-            flash('You need to be logged in as an admin')
-            return redirect('/admin/login/')
+    else:
+        flash('You need to be logged in as an admin')
+        return redirect('/admin/login/')
     
     return render_template('admin/add_actor.html',admin_session=admin_session,details=details)
 
@@ -671,6 +671,7 @@ def confirm_delete_genre(id):
     flash('Genre has been deleted')
     return redirect('/admin/genres/')
 
+# route to change the status of a movie
 @app.route('/admin/update_movie_status/', methods=['POST'])
 def update_movie_status():
     movie_id = request.form.get('movieid')

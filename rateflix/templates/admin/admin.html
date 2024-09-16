@@ -12,6 +12,7 @@
                                 <td>Last Name</td>
                                 <td>Username</td>
                                 <td>Email</td>
+                                <td>Movies Added</td>
                                 <td>Date Joined</td>
                             </tr>
                         </thead>
@@ -23,6 +24,7 @@
                                 <td> {{ u.member_lastname }} </td>
                                 <td> {{ u.member_username }} </td>
                                 <td> {{ u.member_email }} </td>
+                                <td> {{ u.movies|count }} </td>
                                 <td> {{ u.member_join_date }}</td>
                             </tr>
                             {% endfor %}

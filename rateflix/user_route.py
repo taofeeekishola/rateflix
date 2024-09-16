@@ -11,11 +11,14 @@ def get_user_byid(id):
     data = Member.query.get(id)
     return data
 
+##home page route
 @app.route('/')
 def home():
-    movies = Movie.query.all()
+    movies = Movie.query.filter().all()
     genres = Genre.query.all()
     studio = Studio.query.all()
+    ratings = Rating.query.all()
+
     ## this checks if the session is empty and allows us to use it to create a database object and access the data in the home page
     data = session.get('member_id')
     if data != None:
@@ -23,7 +26,7 @@ def home():
     else:
         user_session = None
 
-    return render_template('user/index.html' ,user_session=user_session,movies=movies,genres=genres,studio=studio)
+    return render_template('user/index.html' ,user_session=user_session,movies=movies,genres=genres,studio=studio,ratings=ratings)
 
 ##this checks if the username already exists in the database and displays the options using ajax
 @app.route('/user/valusername/')
@@ -47,7 +50,7 @@ def emailval():
     else:
         return 'Email is avaliable'
 
-
+##user signup page
 @app.route('/user/signup/',methods=['GET','POST'])
 def user_signup():
     signup = Register()
@@ -76,7 +79,6 @@ def user_signup():
 
 
     return render_template('user/signup.html', signup=signup)
-
 
 ##the login page
 @app.route('/user/login/', methods=['GET','POST'])
@@ -200,11 +202,13 @@ def movie_info(id):
 
     return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating)
 
+##route is used to submit reviews
 @app.route('/ajax/movie/review/',methods=['POST'])
 def submit_review():
     review = request.form.get('reviewData')
     movieid = request.form.get('movieId')
     data = session.get('member_id')
+    member = Member.query.get(data)
 
     user_review = Review(member_id=data, movie_id=movieid, review_content=review)
     db.session.add(user_review)
@@ -215,6 +219,7 @@ def submit_review():
  
     # Return only the newly submitted review
     return jsonify({
+        'member_username':member.member_username,
         'review_content': user_review.review_content,
         'review_date': user_review.review_date.strftime('%Y-%m-%d %H:%M:%S')
     })
@@ -317,17 +322,17 @@ def filter_movies():
     movies = []
     
     if not year and not genre and not studio:
-        movies = Movie.query.all() 
+        movies = Movie.query.filter(Movie.movie_status =='approved').all() 
     
     if year:
-        movies = Movie.query.filter(extract('year', Movie.movie_release_date) == int(year)).all()
+        movies = Movie.query.filter(extract('year', Movie.movie_release_date) == int(year),Movie.movie_status =='approved').all()
 
     if genre:
-        movies = Movie.query.join(MovieGenre).filter(MovieGenre.genre_id == int(genre)).all()
+        movies = Movie.query.join(MovieGenre).filter(MovieGenre.genre_id == int(genre),Movie.movie_status =='approved').all()
 
 
     if studio:
-        movies = Movie.query.filter(Movie.production_studio == int(studio)).all()
+        movies = Movie.query.filter(Movie.production_studio == int(studio),Movie.movie_status =='approved').all()
     
     if not movies:
         return '<p>No movies found matching the criteria.</p>'
@@ -338,13 +343,12 @@ def filter_movies():
         <div class="card card-custom">
             <a href="/movie/info/{movie.movie_id}"><img src="/static/uploads/poster/{movie.movie_poster}" class="card-img-top" alt="{movie.movie_poster}"></a>
             <div class="card-body">
-                <a href="/movie/info/{movie.movie_id}"><p class="card-title mb-2">{movie.movie_title}</p></a>
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <a href="/movie/info/{movie.movie_id}"><p class="card-title mb-2 fs-6">{movie.movie_title}</p></a>
+                <div class="d-flex justify-content-between align-items-center mb-2 ">
                     <p class="card-text mb-0"></p>
                 </div>
                 <div class="d-flex justify-content-center align-items-center">
                     <a href="/movie/info/{movie.movie_id}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                    <button class="btn btn-outline-primary btn-sm flex-fill movies custom-btn"><i class="fa-solid fa-plus"></i> Watchlist</button>
                 </div>
             </div>
         </div>
@@ -355,8 +359,6 @@ def filter_movies():
     return movie_html
     
    
-
-
 ##route to submit movie rating
 @app.route('/user/submitrating/', methods=['POST'])
 def user_rating():
@@ -371,7 +373,7 @@ def user_rating():
         # Check if the user has already rated this movie
         existing_rating = Rating.query.filter_by(member_id=data, movie_id=movieid).first()
         if existing_rating:
-            return jsonify({'error': 'You have already rated this movie'}), 400
+            return jsonify({'message': 'You have already rated this movie'}), 200
 
         user_rating = Rating(member_id=data, movie_id=movieid, rating_score=rating)
         db.session.add(user_rating)

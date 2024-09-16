@@ -300,16 +300,24 @@
                   data: {reviewData:review,movieId:movieId, csrf_token: csrfToken},
 
                   success: function(resp){
-                   $('#show').prepend('<p>' + resp.review_content + ' ' + resp.review_date + '</p>');
+                   var newReviewHtml = `<div class="card mb-3" style="max-width: 500px;">
+                                            <div class="card-body">
+                                                <h5 class="card-title">${resp.member_username}</h5>
+                                                <p class="card-text">${resp.review_content}</p>
+                                                <footer class="blockquote-footer">
+                                                    ${resp.review_date}
+                                                </footer>
+                                            </div>
+                                        </div>`;
+                   $('#show').prepend(newReviewHtml);
 
-                // Optionally, clear the input field
-                $('#review').val('');
-                  },
-                  error: function(err){
-                    console.log(err);
-                  }
+                  $('#review').val('');
+                    },
+                    error: function(err){
+                      console.log(err);
+                    }
+                  })
                 })
-              })
               
              
               var rating_data = 0;
@@ -361,7 +369,11 @@
                       type: 'POST',
                       data: { rating: rating_data, movieId: movieId,csrf_token: csrfToken }, // Send data as URL-encoded
                       success: function(response) {
-                          alert('Rating submitted successfully: ' + response.message);
+                         if (response.message === 'You have already rated this movie') {
+                            alert(response.message); // Show friendly message
+                        } else {
+                            alert('Rating submitted successfully: ' + response.message);
+                        }
                       },
                       error: function(xhr, status, error) {
                           console.error('Error details:', xhr.responseText);
