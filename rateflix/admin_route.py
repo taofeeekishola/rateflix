@@ -197,7 +197,6 @@ def update_movies(id):
             movie.movie_description = summary
             movie.production_studio = movie_studio
             movie.producer_id = movie_producer
-            # movie.movie_status = 'approved'
 
         # Get all existing actors related to the movie
             movieactors = MovieActor.query.filter_by(movie_id=id).all()

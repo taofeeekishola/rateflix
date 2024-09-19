@@ -1,9 +1,10 @@
+import secrets,os
 from flask import render_template,request,redirect,flash,url_for,session,jsonify
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy import extract
-import timeago
+
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm,MovieReview
+from rateflix.forms import Register,Login,MovieForm,MovieReview,UpdateProfileForm
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review,Rating
 
 ##funcion to always retrive the user id
@@ -113,17 +114,63 @@ def user_logout():
     flash('You are now logged out','success')
     return redirect('/')
 
-"""THE USERPAGE VIEWS"""
+## route to visit user profile page
 @app.route('/user/profile/')
 def user_page():
     data = session.get('member_id')
+
     if data != None:
         user_session = get_user_byid(data)
-        return render_template('user/profile.html' ,user_session=user_session)
+        
     else:
         flash('You need to login to access this page')
         return redirect('/user/login/')
     
+    return render_template('user/profile.html' ,user_session=user_session)
+
+## route to allow users update profile
+@app.route('/user/update/profile/',methods=['GET','POST'])
+def user_profile_update():
+    update = UpdateProfileForm()
+    data = session.get('member_id')
+
+    if data != None:
+        user_session = get_user_byid(data)
+        
+        if update.validate_on_submit():
+            firstname = request.form.get('first_name')
+            lastname = request.form.get('last_name')
+            profile_picture = request.files.get('profile_picture')
+            bio = request.form.get('bio')
+            dob = request.form.get('date_of_birth')
+
+            ## checking if profile_picture was provided
+            if profile_picture and profile_picture.filename:
+                profile_picture_filename = profile_picture.filename
+                profile_picture_ext = os.path.splitext(profile_picture_filename)
+                extension = profile_picture_ext[-1]
+        
+                ##generating new names
+                profile_picture_name = secrets.token_hex(10)
+                profile_picture.save("rateflix/static/uploads/profile_pic/"+profile_picture_name+extension)
+                user_session.member_profile_pic = profile_picture_name+extension
+            
+            user_session.member_firstname = firstname
+            user_session.member_lastname = lastname
+            user_session.member_bio = bio
+            user_session.member_date_of_birth = dob
+
+            db.session.commit()
+            
+            flash('Profile has been updated')
+            return redirect('/user/profile/')
+    else:
+        flash('You need to login to access this page')
+        return redirect('/user/login/')
+    
+    return render_template('user/update_profile.html',user_session=user_session,update=update)
+
+
 ## the route users use to add movies to the database
 @app.route('/user/add_movie/', methods=['GET','POST'])
 def user_addmovie():

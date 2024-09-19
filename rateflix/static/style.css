@@ -46,3 +46,8 @@ body{
   align-items: center;
   justify-content: center;
 }
+
+.profile_pic{
+    width:250px;
+    height:250px;
+}

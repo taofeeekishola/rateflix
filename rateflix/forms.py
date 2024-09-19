@@ -17,7 +17,17 @@ class Register(FlaskForm):
     email = StringField('Email',validators=[DataRequired(message='Please enter your email'),Email(message='Please enter a valid email')])
     password = PasswordField('Password',validators=[DataRequired(message='Please enter your password')])
     con_password = PasswordField('Confirm Password',validators=[DataRequired(message='Please enter your password'), EqualTo('password',message='Password must be the same')])
+    profile_picture  = FileField("Profile Picture",validators=[FileAllowed(["jpg","png"],"Invalid File Format")])
+    date_of_birth = DateField('Date of birth', format='%Y-%m-%d')
     signup = SubmitField('Sign Up')
+
+    
+class UpdateProfileForm(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired(message='Please enter your First Name')])
+    last_name = StringField('Last Name', validators=[DataRequired(message='Please enter your Last Name')])
+    profile_picture = FileField("Profile Picture", validators=[FileAllowed(["jpg", "png"], "Invalid File Format")])
+    date_of_birth = DateField('Date of Birth', format='%Y-%m-%d')
+    update = SubmitField('Update')
 
 class MovieForm(FlaskForm):
     title = StringField('Title',validators=[DataRequired(message='Enter the title of the movie')])

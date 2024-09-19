@@ -3,15 +3,26 @@
         <!--About User-->
         <div class="row mt-3 align-items-center">
             <div class="col-md-6 text-center">
-              <img src="/static/Images/default.jfif" alt="profile image" class=''>
+              {% if user_session.member_profile_pic == None %}
+                <img src="/static/Images/default.jfif" alt="profile image" class='img-fluid'>
+              {% else %}
+                <img src="/static/uploads/profile_pic/{{ user_session.member_profile_pic }}" alt="{{ user_session.member_username }} profile_pic" class='img-fluid profile_pic'>
+              {% endif %}
               <p class="d-block"> {{ user_session.member_username }} </p>
-              <button class="btn btn-primary d-block d-lg-inline mx-auto mx-lg-2">Edit Profile</button>
+              <a  href="/user/update/profile/" class="btn btn-primary d-block d-lg-inline mx-auto mx-lg-2">Edit Profile</a>
             </div>
             <div class="col-md-6">
               <div class="row">
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                      {% for message in messages %}
+                          <p class="alert alert-danger"> {{ message }} </p>
+                      {% endfor %}
+                  {% endif %}
+                {% endwith %}
                 <div class="col-md-4 stat">
-                    <div class="stat-number">Number of movies added</div>
-                    <div></div>
+                    <div class="stat-number">Num of movies added</div>
+                    <div class="text-center"> {{ user_session.movies|count }} </div>
                 </div>
                 <div class="col-md-4 stat">
                     <div> <a href="/user/movieadded/" class="btn btn-primary">Movies Added</a></div>

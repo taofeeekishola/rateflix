@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="row mt-5">
+        <div class="col-md-6 offset-3">
+            <h2>UPDATE PROFILE</h2>
+            <form action="/user/update/profile/" method="post" enctype="multipart/form-data" novalidate>
+                {{ update.csrf_token }}
+
+                {{update.first_name.label}}
+                {{ update.first_name(class_='form-control mb-3', placeholder='First Name', value=user_session.member_firstname) }}
+                {% if update.first_name.errors %}
+                    {% for error in update.first_name.errors %}
+                        <p class="text-danger"> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+
+                {{update.last_name.label}}
+                {{ update.last_name(class_='form-control mb-3', placeholder='Last Name', value=user_session.member_lastname) }}
+                {% if update.last_name.errors %}
+                    {% for error in update.last_name.errors %}
+                        <p class="text-danger"> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+
+                {{update.profile_picture.label}}
+                {{ update.profile_picture(class_='form-control mb-3') }}
+                {% if update.profile_picture.errors %}
+                    {% for error in update.profile_picture.errors %}
+                        <p class="text-danger"> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+                
+                <label>Bio</label>
+                <textarea class="form-control mb-3" name="bio" >{{ user_session.member_bio }} </textarea>
+
+                {{update.date_of_birth.label}}
+                {{ update.date_of_birth(class_='form-control mb-3', value=user_session.member_date_of_birth) }}
+
+               <button class="btn btn-primary" type="submit" >Update</button>
+          
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
