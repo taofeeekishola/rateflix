@@ -1,36 +1,90 @@
-{% extends 'admin/admin_base.html' %}
-{% block admincontent %}
-           
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/ico" href="/static/images/favicon-32x32.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/fa/css/all.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Admin RateFlix</title>
+</head>
+<body>
+    <div class="container">
+         <div class="container-fluid">
+             <!--Navbar-->
+            <div class="row">
+                <div class="col-md-12 p-0">
+                    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                        <div class="container-fluid">
+                            <a class="navbar-brand text-primary" href="#">RateFlix</a>
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                                
+                                <div class="d-flex">
+                                    {% if session.get('admin_id') != None %}
+                                    <div class="btn-group me-2">
+                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                            {{ admin_session.admin_username  }}
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <a href="/admin/logout/"><li><button class="dropdown-item" type="button">Logout</button></li></a>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                    
 
-            <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                   
-                <h1>ADMIN LOGIN</h1>
-                {% with messages = get_flashed_messages() %}
-                    {% if messages %}
-                        {% for message in messages %}
-                            <p class="alert alert-danger"> {{ message }} </p>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                <form action="/admin/login/" method="post" novalidate>
-                    {{ login.csrf_token }}
-                    
-                    {{ login.email(class="form-control mb-2", placeholder='Email') }}
-                        {% if login.email.errors %}
-                            {% for error in login.email.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        {% endif %}
-                                                    
-                    {{ login.password(class="form-control mb-2",placeholder='Password') }}
-                        {% if login.password.errors %}
-                            {% for error in login.password.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        {% endif %}
-
-                    {{ login.login(class="btn btn-primary") }}
-                </form>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
             </div>
-    
-{% endblock %}
+
+            <div class="row mt-5">
+                <div class="col-md-6 offset-3">
+                   
+                    <h1>ADMIN LOGIN</h1>
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p class="alert alert-danger"> {{ message }} </p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <form action="/admin/login/" method="post" novalidate>
+                        {{ login.csrf_token }}
+                        
+                        {{ login.email(class="form-control mb-2", placeholder='Email') }}
+                            {% if login.email.errors %}
+                                {% for error in login.email.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            {% endif %}
+                                                        
+                        {{ login.password(class="form-control mb-2",placeholder='Password') }}
+                            {% if login.password.errors %}
+                                {% for error in login.password.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            {% endif %}
+
+                        {{ login.login(class="btn btn-primary") }}
+                    </form>
+                </div>
+        
+            </div>
+        </div>
+    </div>
+       
+        
+    <script src="/static/jquery.js"></script>
+    <script src="/static/scripts.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.bundle.js" type="text/javascript"></script>
+     {% block adminscript %}
+
+     {% endblock %}
+</body>
+</html>

@@ -2,8 +2,8 @@ import os,secrets
 from flask import render_template,redirect,flash,request,session,url_for, jsonify
 
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail,GenreDetail,StudioDetail
-from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review,Admin
+from rateflix.forms import Login,MovieForm,ActorDetail,ProducerDetail,GenreDetail,StudioDetail
+from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Admin
 
 
 ##funcion to always retrive the admin id
