@@ -47,3 +47,7 @@ class ProducerDetail(FlaskForm):
 class GenreDetail(FlaskForm):
     name = StringField('Full Name',validators=[DataRequired(message='Genre name is required')])
     add = SubmitField('Add')
+
+class StudioDetail(FlaskForm):
+    name = StringField('Full Name',validators=[DataRequired(message='Studio name is required')])
+    add = SubmitField('Add')

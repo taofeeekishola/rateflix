@@ -1,0 +1,22 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Update Studio details</h1>
+                
+                    <form method="post" action="/admin/update/studio/{{ studiodetails.studio_id }}/" novalidate>
+                    
+                        {{ studio.csrf_token }}
+
+                        {{ studio.name(class_='form-control mb-3', placeholder='Full Name', value=studiodetails.studio_name) }}
+                        {% if studio.name.errors %}
+                            {% for error in studio.name.errors %}
+                                <p class="text-danger" > {{ error }} </p>
+                            {% endfor %}
+                        {% endif %}
+
+                        {{ studio.add(class_='btn btn-primary') }}
+
+                    </form>
+                </div>
+{% endblock %}

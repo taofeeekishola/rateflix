@@ -2,7 +2,7 @@ import os,secrets
 from flask import render_template,redirect,flash,request,session,url_for, jsonify
 
 from rateflix import app
-from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail,GenreDetail
+from rateflix.forms import Register,Login,MovieForm,MovieReview,ActorDetail,ProducerDetail,GenreDetail,StudioDetail
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review,Admin
 
 
@@ -698,5 +698,101 @@ def update_movie_status():
                     </td>
                 """
 
+## route to view all movie studio
+@app.route('/admin/studios/')
+def admin_studio():
+    studio = Studio.query.all()
+
+    data = session.get('admin_id')
+    if data != None:
+        admin_session = get_user_byid(data)
+    else:
+        flash('You need to be logged in as an admin')
+        return redirect('/admin/login/')
+
+    return render_template('admin/admin_studio.html',studio=studio,admin_session=admin_session)
+
+##route to add a new studio
+@app.route('/admin/studio/add/', methods=['GET','POST'])
+def admin_add_studio():
+    studio = StudioDetail()
+
+    data = session.get('admin_id')
+    if data != None:
+        admin_session = get_user_byid(data)
+
+
+     ## check if studio exists
+        if studio.validate_on_submit():
+            name = request.form.get('name')
+
+            existing_studio = Studio.query.filter(Studio.studio_name == name).first()
+
+            ## checking if the genre exists in the database already
+            if existing_studio:
+                flash('Studio already exists')
+                return redirect('/admin/studios/')
+            else:
+                studiodetails = Studio(studio_name=name)
+                
+                db.session.add(studiodetails)
+                db.session.commit()
+
+                flash('Studio has been added')
+                return redirect('/admin/studios/')
+    else:
+        flash('You need to be logged in as an admin')
+        return redirect('/admin/login/')
+    
+    return render_template('admin/add_studio.html', studio=studio,admin_session=admin_session)
    
-   
+##route to delete a studio
+@app.route('/admin/delete/studio/<int:id>/')
+def delete_studio(id):
+
+    studio = Studio.query.get(id)
+
+    data = session.get('admin_id')
+    if data != None:
+        admin_session = get_user_byid(data)
+    else:
+        flash('You need to be logged in as an admin')
+        return redirect('/admin/login/')
+    
+    return render_template('admin/delete_studio.html',studio=studio,admin_session=admin_session)
+
+## route to confirm deletion
+@app.route('/confirm/delete/studio/<int:id>/')
+def confirm_delete_studio(id):
+    studio = Studio.query.get(id)
+
+    if studio:
+        db.session.delete(studio)
+        db.session.commit()
+    
+    flash('Studio has been deleted')
+    return redirect('/admin/studios/')
+
+## route to update studio
+@app.route('/admin/update/studio/<int:id>/',methods=['GET','POST'])
+def update_studio(id):
+    studiodetails = Studio.query.get(id)
+    studio = StudioDetail()
+
+    data = session.get('admin_id')
+    if data != None:
+        admin_session = get_user_byid(data)
+
+        if studio.validate_on_submit():
+            name = request.form.get('name')
+            studiodetails.studio_name = name
+
+            db.session.commit()
+
+            flash('Studio has been updated')
+            return redirect('/admin/studios/')
+    else:
+        flash('You need to be logged in as an admin')
+        return redirect('/admin/login/')
+    
+    return render_template('admin/update_studio.html',studiodetails=studiodetails,studio=studio,admin_session=admin_session)

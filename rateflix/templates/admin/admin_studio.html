@@ -1,0 +1,37 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                    <h1 class="my-4">Studio</h1>
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <p class="alert alert-success"> {{ message }} </p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <a href="/admin/studio/add/" class="btn btn-primary text-end" >Add Studio</a>
+                    <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>S/N</td>
+                                    <td>Name</td>
+                                    <td>Activity</td>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for s in studio %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ s.studio_name }}</td>
+                                        <td>
+                                            <a href="/admin/update/studio/{{s.studio_id}}" class="btn btn-primary">Update</a>
+                                            <a href="/admin/delete/studio/{{ s.studio_id }}/" class="btn btn-danger" >Delete</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                    </table>
+                </div>
+{% endblock %}

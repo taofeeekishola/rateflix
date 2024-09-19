@@ -1,0 +1,16 @@
+{% extends 'admin/admin_base.html' %}
+{% block admincontent %}
+    <!-- Main Content -->
+                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
+        
+                    {% if studio %}
+                        <h1 class="my-4">Delete {{ studio.studio_name }}</h1>
+                    {% else %}
+                        <h1 class="my-4">Studio not found</h1>
+                    {% endif %}
+                    
+                    <h3>Are you sure you want to delete</h3>
+                    <a href="/admin/studios/" class="btn btn-primary">No</a>
+                    <a href="/confirm/delete/studio/{{ studio.studio_id  }}/" class="btn btn-danger" >Yes</a>
+                </div>
+{% endblock %}
