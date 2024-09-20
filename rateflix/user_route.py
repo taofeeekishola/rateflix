@@ -15,7 +15,7 @@ def get_user_byid(id):
 ##home page route
 @app.route('/')
 def home():
-    movies = Movie.query.filter().all()
+    movies = Movie.query.filter(Movie.movie_status == 'approved').all()
     genres = Genre.query.all()
     studio = Studio.query.all()
     ratings = Rating.query.all()
@@ -118,6 +118,7 @@ def user_logout():
 @app.route('/user/profile/')
 def user_page():
     data = session.get('member_id')
+    movies = Movie.query.filter(Movie.movie_status=='approved', Movie.added_by == data)
 
     if data != None:
         user_session = get_user_byid(data)
@@ -126,7 +127,7 @@ def user_page():
         flash('You need to login to access this page')
         return redirect('/user/login/')
     
-    return render_template('user/profile.html' ,user_session=user_session)
+    return render_template('user/profile.html' ,user_session=user_session,moviess=movies)
 
 ## route to allow users update profile
 @app.route('/user/update/profile/',methods=['GET','POST'])
@@ -228,7 +229,15 @@ def movie_info(id):
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
     ratings = Rating.query.filter(Rating.movie_id == id).all()
+    moviess = Movie.query.filter(Movie.movie_status == 'approved').all()
+    
+    genre_ids = [genre.genre_id for genre in genres]
 
+    ## getting all the movies with the same genres as the movie the member is reading about
+    similar_movies = (
+            Movie.query.join(MovieGenre, Movie.movie_id == MovieGenre.movie_id).filter(MovieGenre.genre_id.in_(genre_ids),Movie.movie_status == 'approved',Movie.movie_id != id).limit(5)
+        )
+    
     if ratings:
         total_ratings = sum(r.rating_score for r in ratings)
         average_rating = total_ratings / len(ratings)
@@ -247,7 +256,7 @@ def movie_info(id):
         user_session = None
     all_reviews = db.session.query(Review).filter(Review.movie_id == id).order_by(Review.review_date.desc()).all()
 
-    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating)
+    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating,moviess=similar_movies)
 
 ##route is used to submit reviews
 @app.route('/ajax/movie/review/',methods=['POST'])
@@ -388,7 +397,7 @@ def filter_movies():
     f'''
     <div class="col-6 col-md-4 col-lg-2 mb-4">
         <div class="card card-custom">
-            <a href="/movie/info/{movie.movie_id}"><img src="/static/uploads/poster/{movie.movie_poster}" class="card-img-top" alt="{movie.movie_poster}"></a>
+            <a href="/movie/info/{movie.movie_id}"><img src="/static/uploads/poster/{movie.movie_poster}" class="card-img-top poster" alt="{movie.movie_poster}"></a>
             <div class="card-body">
                 <a href="/movie/info/{movie.movie_id}"><p class="card-title mb-2 fs-6">{movie.movie_title}</p></a>
                 <div class="d-flex justify-content-between align-items-center mb-2 ">

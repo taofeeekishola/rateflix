@@ -34,7 +34,8 @@
             </div>
         </div>
 
-     
+        
+        {#
         <!--User watchlist header-->
         <div class="row mt-5">
             <div class="col-md-6">
@@ -95,35 +96,44 @@
           </div>
         </div>
 
-        </div>
+        </div>#}
 
         <!--User reviews header-->
         <div class="row mt-5">
             <div class="col-md-6">
-                 <h3 class="sub-heading">My Reviews</h3>
+                 <h3 class="sub-heading">Added Movies</h3>
             </div>
         </div>
 
         <!--User reviews-->
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/walkingdead.jpg" class="card-img-top" alt="The Walking Dead"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Walking Dead</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">6/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
+        <div class="row">
+          {% if moviess %}
+          {% for movie in moviess %}
+            <div class="col-6 col-md-4 col-lg-2 mb-4">
+              <div class="card card-custom">
+                {% if movie.movie_poster == "" or movie.movie_poster == None %}
+                  <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top " alt="Movie Poster"></a>
+                {% else %}
+                  <a href="/movie/info/{{ movie.movie_id }}"><img src="/static/uploads/poster/{{ movie.movie_poster }}" class="card-img-top poster" alt="{{ movie.movie_poster }}"></a>
+                {% endif %}
+                <div class="card-body">
+                  <a href="/movie/info/{{ movie.movie_id }}"><p class="card-title mb-2 fs-6">{{ movie.movie_title }}</p></a>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                  
+                  </div>
+                  <!-- Align the buttons side by side with equal width and reduced height -->
+                  <div class="d-flex justify-content-center align-items-center">
+                    <a href="/movie/info/{{ movie.movie_id }}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+         {% endfor %}
+        {% endif %}
         </div>
 
        
-
+        {#
         <!--Recommend Header-->
         <div class="row mt-5">
             <div class="col-md-6">
@@ -235,6 +245,6 @@
           </div>
         </div>
 
-        </div>
+        </div> #}
 
 {% endblock %}

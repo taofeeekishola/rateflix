@@ -59,3 +59,22 @@ body{
     text-decoration:none;
     color:white;
 }
+  .poster {
+    width: 100%; /* Makes the image fill the card width */
+    height: 300px; /* Fixed height */
+    object-fit: cover; /* Ensures the image scales and crops properly */
+  }
+
+  /* Optional: Add custom styles to the card to keep everything uniform */
+  .card-custom {
+    height: 100%;
+  }
+
+  .card-title {
+    font-size: 14px; /* You can adjust the font size */
+  }
+
+  .custom-btn {
+    font-size: 12px; /* Adjust button font size */
+    padding: 5px 10px; /* Adjust padding for smaller buttons */
+  }

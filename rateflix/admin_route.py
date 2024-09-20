@@ -163,7 +163,7 @@ def update_movies(id):
             title = request.form.get('title')
             release_date= request.form.get('release_date')
             summary = request.form.get('description')
-            movie_actor = request.form.get('actor')
+            movie_actor = request.form.getlist('actor')
             movie_producer=request.form.get('producer')
             movie_studio = request.form.get('studio')
             movie_genre = request.form.getlist('genre')
@@ -198,35 +198,35 @@ def update_movies(id):
             movie.production_studio = movie_studio
             movie.producer_id = movie_producer
 
-        # Get all existing actors related to the movie
+            # Get all existing actors related to the movie
             movieactors = MovieActor.query.filter_by(movie_id=id).all()
 
-            # Create a set of existing actor IDs for the current movie
+            # creating a set of existing actor IDs for the current movie
             existing_actor_ids = {ma.actor_id for ma in movieactors}
 
-            # List of actor IDs to add (assuming 'movie_actor' is a list of actor IDs from the form)
+            # list of actor IDs to add 
             for actor_id in movie_actor: 
                 actor_id = int(actor_id)  
 
-                # Check if the actor is already related to the movie
+                # checking if the actor already exists in the movie
                 if actor_id not in existing_actor_ids:
-                    # Actor is not yet added to this movie, so add it
+                    
                     new_movie_actor = MovieActor(movie_id=id, actor_id=actor_id)
                     db.session.add(new_movie_actor)
 
             ##this checks if the movie already has genres before updating
             moviegenres = MovieGenre.query.filter_by(movie_id=id).all()
 
-            # Create a set of existing genre IDs for the current movie
+            # creating a set of existing genre IDs for the current movie
             existing_genre_ids = {mg.genre_id for mg in moviegenres}
 
-            # Loop through the genre IDs provided in the form (assuming movie_genre is a list of genre IDs)
+            # Looping through the genre IDs provided 
             for genre_id in movie_genre:
                 genre_id = int(genre_id)  
 
-                # Check if the genre is already related to the movie
+                # checking if the genre is already exists
                 if genre_id not in existing_genre_ids:
-                    # Genre is not yet added to this movie, so add it
+                  
                     new_movie_genre = MovieGenre(movie_id=id, genre_id=genre_id)
                     db.session.add(new_movie_genre)
 
