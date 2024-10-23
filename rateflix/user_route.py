@@ -193,7 +193,7 @@ def user_addmovie():
             movie_studio = request.form.get('studio')
             movie_genre = request.form.getlist('genre')
 
-            movie_details = Movie(movie_title=title,producer_id=movie_producer,movie_release_date=release_date,movie_description=summary,production_studio=movie_studio)
+            movie_details = Movie(movie_title=title,producer_id=movie_producer,movie_release_date=release_date,movie_description=summary,production_studio=movie_studio,added_by=data)
 
             db.session.add(movie_details)
             db.session.commit()

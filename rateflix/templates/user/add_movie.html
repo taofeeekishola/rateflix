@@ -51,7 +51,7 @@
             </select>
 
 
-            {{ movie.producer.label }}
+            {{ movie.producer.label }}<span class="text-danger">*</span>
             <select name="producer" id="producer" class="form-select mb-3">
                 <option value=""> Select a producer </option>
                 {% for p in producer %}

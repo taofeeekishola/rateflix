@@ -231,7 +231,7 @@ def update_movies(id):
                     db.session.add(new_movie_genre)
 
             db.session.commit()
-            flash('Movie has been updated and approved')
+            flash('Movie has been updated')
             return redirect('/admin/movies/')
     else:
         flash('You need to be logged in as an admin')
