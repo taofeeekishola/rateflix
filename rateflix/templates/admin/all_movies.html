@@ -56,7 +56,10 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-warning state" data-status="{{ movie.movie_id }}">{{ movie.movie_status }}</button>
+                                    <select class="status-dropdown mb-2" data-movie-id="{{ movie.movie_id }}">
+                                        <option value="pending" {% if movie.movie_status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="approved" {% if movie.movie_status == 'approved' %}selected{% endif %}>Approved</option>
+                                    </select>
                                 </td>
                                 <td>
                                     <a  href="/admin/movie/update/{{ movie.movie_id }}/" class="btn btn-primary">Update</a>
@@ -74,24 +77,32 @@
 {% block adminscript %} 
     <script>
       $(document).ready(function(){
-        $('.state').click(function(){
-            var curStatus = $(this).text()
-            var movieid = $(this).data('status');
-            var csrfToken = "{{ csrf_token() }}";
+        $('.status-dropdown').change(function(){
+            var newStatus = $(this).val();
+            var movieId = $(this).data('movie-id');
+            var csrfToken = "{{ csrf_token() }}"; // CSRF token if needed
 
             $.ajax({
-                url:'/admin/update_movie_status/',
-                type:'POST',
-                data: {status:curStatus,movieid:movieid,csrf_token: csrfToken},
-
-                success: function(resp){
-                    $(this).html(resp)
+                url: '/admin/update_movie_status/',
+                type: 'POST',
+                data: {
+                    status: newStatus,
+                    movieid: movieId,
+                    csrf_token: csrfToken
+                },
+                success: function(){
+                    // Optionally log or do something after successful update
+                    console.log('Movie status updated successfully');
                 },
                 error: function(err){
-                    console.log(err)
+                    // Handle error (e.g., if movie not found)
+                    console.log('Error updating movie status', err);
+                    alert('Failed to update movie status.');
                 }
+            });
         });
     });
-      });
+
+
     </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 import os,secrets
-from flask import render_template,redirect,flash,request,session,url_for, jsonify
+from flask import render_template,redirect,flash,request,session,url_for, jsonify, make_response
 
 from rateflix import app
 from rateflix.forms import Login,MovieForm,ActorDetail,ProducerDetail,GenreDetail,StudioDetail
@@ -676,26 +676,13 @@ def update_movie_status():
     movie_id = request.form.get('movieid')
     new_status = request.form.get('status')
 
-    
     movie = Movie.query.get(movie_id)
-    if new_status == 'pending':
-        movie.movie_status = 'approved'
+    if movie:
+        movie.movie_status = new_status
         db.session.commit()
-        button_class = 'btn btn-success'
-        return f"""
-                    <td>
-                       <button class="{button_class} state" data-status="{movie.movie_id }">{ movie.movie_status }</button>
-                    </td>
-                """
-    elif new_status == 'approved':
-        movie.movie_status = 'pending'
-        db.session.commit()
-        button_class = 'btn btn-warning'
-        return f"""
-                    <td>
-                        <button class="{button_class} state" data-status="{movie.movie_id }">{ movie.movie_status }</button>
-                    </td>
-                """
+        return make_response('', 204)  # Return 204 No Content
+    else:
+        return make_response('', 404)  # Return 404 Not Found if the movie doesn't exist
 
 ## route to view all movie studio
 @app.route('/admin/studios/')
