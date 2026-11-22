@@ -1,7 +1,8 @@
-import os,secrets
+import os,secrets,hmac
 from flask import render_template,redirect,flash,request,session,url_for, jsonify, make_response
+from werkzeug.security import generate_password_hash,check_password_hash
 
-from rateflix import app
+from rateflix import app, upload_path
 from rateflix.forms import Login,MovieForm,ActorDetail,ProducerDetail,GenreDetail,StudioDetail
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Admin
 
@@ -10,6 +11,20 @@ from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieAct
 def get_user_byid(id):
     data = Admin.query.get(id)
     return data
+
+## checks an admin's password.
+## Passwords should be stored as werkzeug hashes. An admin inserted manually with a plain-text
+## password can still log in once, and that password is then replaced with a hash.
+def admin_password_matches(admin, password):
+    stored = admin.admin_password or ''
+    if stored.startswith(('scrypt:', 'pbkdf2:')):
+        return check_password_hash(stored, password)
+
+    if hmac.compare_digest(stored.encode(), password.encode()):
+        admin.admin_password = generate_password_hash(password)
+        db.session.commit()
+        return True
+    return False
 
 ## this is the route that displays the user details
 @app.route('/admin/')
@@ -35,8 +50,7 @@ def admin_login():
 
         data = db.session.query(Admin).filter(Admin.admin_email == email).first()
         if data:
-            pass_check = data.admin_password
-            if password  == pass_check:
+            if admin_password_matches(data, password):
                 session['admin_id'] = data.admin_id
                 return redirect('/admin/')
             else:
@@ -102,7 +116,7 @@ def admin_add_movie():
         
                 ##generating new names
                 poster_name = secrets.token_hex(10)
-                poster.save("rateflix/static/uploads/poster/"+poster_name+extension1)
+                poster.save(upload_path('poster', poster_name+extension1))
                
             
             ##checking if the trailer was provided
@@ -112,7 +126,7 @@ def admin_add_movie():
                 extension2 = trailer_ext[-1]
 
                 trailer_name = secrets.token_hex(10)
-                trailer.save("rateflix/static/uploads/trailers/"+trailer_name+extension2)
+                trailer.save(upload_path('trailers', trailer_name+extension2))
                 
 
             movie_details = Movie(movie_title=title,producer_id=movie_producer,movie_release_date=release_date,movie_description=summary,production_studio=movie_studio,movie_poster=poster_name+extension1 if poster and poster.filename else None, movie_trailer=trailer_name + extension2 if trailer and trailer.filename else None )
@@ -178,7 +192,7 @@ def update_movies(id):
         
                 ##generating new names
                 poster_name = secrets.token_hex(10)
-                poster.save("rateflix/static/uploads/poster/"+poster_name+extension1)
+                poster.save(upload_path('poster', poster_name+extension1))
                 movie.movie_poster = poster_name+extension1
             
             
@@ -188,7 +202,7 @@ def update_movies(id):
                 extension2 = trailer_ext[-1]
 
                 trailer_name = secrets.token_hex(10)
-                trailer.save("rateflix/static/uploads/trailers/"+trailer_name+extension2)
+                trailer.save(upload_path('trailers', trailer_name+extension2))
                 movie.movie_trailer = trailer_name+extension2
 
             ##updating data in the database
@@ -423,7 +437,7 @@ def add_actors():
                 
                     ##generating new names
                     actor_name = secrets.token_hex(10)
-                    picture.save("rateflix/static/uploads/actors/"+actor_name+extension)
+                    picture.save(upload_path('actors', actor_name+extension))
                     actor_photo = actor_name+extension
 
                 actors = Actor(actor_name=name,actor_bio=bio,actor_photo=actor_photo)
@@ -463,7 +477,7 @@ def update_actor(id):
             
                 ##generating new names
                 actor_name = secrets.token_hex(10)
-                picture.save("rateflix/static/uploads/actors/"+actor_name+extension)
+                picture.save(upload_path('actors', actor_name+extension))
                 actor.actor_photo = actor_name+extension
 
             ## uppdating the actor details

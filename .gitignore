@@ -1,3 +1,7 @@
 instance
 migrations
 vrateflix
+__pycache__/
+*.pyc
+.venv/
+.env

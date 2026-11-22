@@ -3,7 +3,7 @@ from flask import render_template,request,redirect,flash,url_for,session,jsonify
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy import extract
 
-from rateflix import app
+from rateflix import app, upload_path
 from rateflix.forms import Register,Login,MovieForm,MovieReview,UpdateProfileForm
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review,Rating
 
@@ -153,7 +153,7 @@ def user_profile_update():
         
                 ##generating new names
                 profile_picture_name = secrets.token_hex(10)
-                profile_picture.save("rateflix/static/uploads/profile_pic/"+profile_picture_name+extension)
+                profile_picture.save(upload_path('profile_pic', profile_picture_name+extension))
                 user_session.member_profile_pic = profile_picture_name+extension
             
             user_session.member_firstname = firstname
