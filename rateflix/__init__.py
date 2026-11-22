@@ -30,8 +30,25 @@ def create_app():
     ## production (Railway): environment variables take priority over config.py
     if os.environ.get('SECRET_KEY'):
         app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
-    if os.environ.get('DATABASE_URL'):
-        app.config['SQLALCHEMY_DATABASE_URI'] = _database_url(os.environ['DATABASE_URL'])
+    database_url = os.environ.get('DATABASE_URL') or os.environ.get('MYSQL_URL')
+    if database_url:
+        app.config['SQLALCHEMY_DATABASE_URI'] = _database_url(database_url)
+
+    ## stop with a clear message instead of a confusing error further down
+    if not app.config.get('SQLALCHEMY_DATABASE_URI'):
+        if 'DATABASE_URL' in os.environ:
+            raise RuntimeError(
+                'DATABASE_URL is set but empty: its reference did not resolve. '
+                'Check that the MySQL service exists and that the name in ${{MySQL.MYSQL_URL}} '
+                'matches the MySQL service name exactly (it is case-sensitive).')
+        raise RuntimeError(
+            'No database configured: DATABASE_URL is not set. On Railway, add '
+            'DATABASE_URL=${{MySQL.MYSQL_URL}} to the rateflix service Variables and click Deploy. '
+            'Locally, set SQLALCHEMY_DATABASE_URI in instance/config.py.')
+    if not app.config.get('SECRET_KEY'):
+        raise RuntimeError(
+            'SECRET_KEY is not set. On Railway, add a SECRET_KEY variable to the rateflix service '
+            '(any long random string) and click Deploy. Locally, set it in instance/config.py.')
 
     ## check connections before using them, and replace them before MySQL closes idle ones
     app.config.setdefault('SQLALCHEMY_ENGINE_OPTIONS', {'pool_pre_ping': True, 'pool_recycle': 280})
