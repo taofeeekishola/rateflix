@@ -82,6 +82,13 @@ def create_app():
         db.create_all()
         print('Database tables are ready.')
 
+    ## `flask --app rateflix seed-db` adds the demo movies in rateflix/seed.py (only adds, never deletes)
+    @app.cli.command('seed-db')
+    def seed_db():
+        from rateflix.seed import seed_demo_data
+        added = seed_demo_data()
+        print(f'Demo data: added {added} movies.')
+
     return app
 
 app = create_app()

@@ -45,17 +45,16 @@
               {% if movies.movie_poster == "" or movies.movie_poster == None %}
                 <img src="/static/Images/quietplace.jpg" alt="A Quiet Place" class="img-fluid w-100 h-100" style="object-fit: cover;">
               {% else %}
-                <img src="/static/uploads/poster/{{ movies.movie_poster }}" alt="A Quiet Place" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                <img src="/static/uploads/poster/{{ movies.movie_poster }}" alt="{{ movies.movie_title }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
               {% endif %}
             </div>
             <div class="col-md-9 d-flex align-items-stretch">
               {% if movies.movie_trailer == "" or movies.movie_trailer == None %}
-                <video controls poster="/static/Images/thumnail.jpg" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                    <source src="/static/media/A Quiet Place- Day One - Official Trailer 2 (2024 Movie) - Lupita Nyong'o, Joseph Quinn.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
+                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white-50" style="min-height: 300px;">
+                    Trailer not available
+                </div>
                 {% else %}
-                 <video controls poster="/static/uploads/thumbnails/{{movies.movie_trailer}}" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                 <video controls class="img-fluid w-100 h-100" style="object-fit: cover;">
                     <source src="/static/uploads/trailers/{{movies.movie_trailer}}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
@@ -103,7 +102,7 @@
             {% for movie_actor  in actors %}
             <div class="col-md-3">
               {% if movie_actor.actor.actor_photo == "" or movie_actor.actor.actor_photo == None %}
-                <img src="/static/Images/cast/lupita.jpg" alt="lupita" class="img-fluid">
+                <img src="/static/Images/default.jfif" alt="{{ movie_actor.actor.actor_name }}" class="img-fluid">
               {% else %}
                 <img src="/static/uploads/actors/{{ movie_actor.actor.actor_photo }}" alt="{{ movie_actor.actor.actor_name }}" class="img-fluid">
                {% endif %}

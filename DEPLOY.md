@@ -51,6 +51,12 @@ mysql -h PUBLIC_HOST -P PUBLIC_PORT -u root -p railway < rateflix.sql
 
 The dump replaces the empty tables created on the first start. The posters and trailers those movies point to are already in the repo, so they show up once the import is done.
 
+## Demo movies (optional)
+
+`rateflix/seed.py` holds 19 real movies, with genres, producers, studios and cast, that use the posters and trailers already in the repo. To add them on Railway, set `SEED_DEMO_DATA=1` on the app service and deploy. Remove the variable once the movies appear. Locally, run `flask --app rateflix seed-db`.
+
+It only adds data: movies whose titles already exist are skipped, and genres, producers, studios and actors with the same name are reused, so running it again is safe.
+
 ## 6. Add an admin manually
 
 Connect to the database in either of these ways:
