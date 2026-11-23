@@ -1,5 +1,6 @@
 import os,secrets,hmac
-from flask import render_template,redirect,flash,request,session,url_for, jsonify, make_response
+from functools import wraps
+from flask import render_template,redirect,flash,request,session,url_for, jsonify, make_response, g, abort
 from werkzeug.security import generate_password_hash,check_password_hash
 
 from rateflix import app, upload_path
@@ -7,10 +8,28 @@ from rateflix.forms import Login,MovieForm,ActorDetail,ProducerDetail,GenreDetai
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Admin,Review,Rating
 
 
-##funcion to always retrive the admin id
-def get_user_byid(id):
-    data = Admin.query.get(id)
-    return data
+## the admin who is logged in, or None
+def current_admin():
+    admin_id = session.get('admin_id')
+    return db.session.get(Admin, admin_id) if admin_id is not None else None
+
+## put @admin_required under @app.route on every admin page and action.
+## Anyone not logged in as an admin is sent to the admin login page (background requests get a 401 instead),
+## so no admin page or action can run without a login. The admin is available as g.admin_session
+## and in every template as admin_session.
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        admin = current_admin()
+        if admin is None:
+            session.pop('admin_id', None)   # e.g. the admin account was deleted
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'error': 'Your admin session has ended. Log in again.'}), 401
+            flash('You need to be logged in as an admin')
+            return redirect('/admin/login/')
+        g.admin_session = admin
+        return view(*args, **kwargs)
+    return wrapped
 
 ## checks an admin's password.
 ## Passwords should be stored as werkzeug hashes. An admin inserted manually with a plain-text
@@ -26,16 +45,18 @@ def admin_password_matches(admin, password):
         return True
     return False
 
+## saves an uploaded file under a random name and returns that name
+def save_upload(file, subfolder):
+    extension = os.path.splitext(file.filename)[-1]
+    name = secrets.token_hex(10) + extension
+    file.save(upload_path(subfolder, name))
+    return name
+
 ## this is the route that displays the user details
 @app.route('/admin/')
+@admin_required
 def admin():
     user = Member.query.order_by(Member.member_join_date.desc()).all()
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
 
     ## numbers for the dashboard
     stats = {
@@ -47,11 +68,14 @@ def admin():
     }
     pending_movies = Movie.query.filter(Movie.movie_status == 'pending').order_by(Movie.movie_id.desc()).limit(5).all()
 
-    return render_template('admin/admin.html',admin_session=admin_session, user=user, stats=stats, pending_movies=pending_movies)
+    return render_template('admin/admin.html', user=user, stats=stats, pending_movies=pending_movies)
 
 ##route to allow the admin login
 @app.route('/admin/login/', methods=['GET','POST'])
 def admin_login():
+    if current_admin() is not None:
+        return redirect('/admin/')
+
     login = Login()
 
     if login.validate_on_submit():
@@ -59,753 +83,467 @@ def admin_login():
         password = request.form.get('password')
 
         data = db.session.query(Admin).filter(Admin.admin_email == email).first()
-        if data:
-            if admin_password_matches(data, password):
-                session['admin_id'] = data.admin_id
-                return redirect('/admin/')
-            else:
-                flash('Incorrect password.')
-                redirect('/admin/login/')
-        else:
-            flash('No admin account uses that email.')
-            redirect('/admin/login/')
+        if data and admin_password_matches(data, password):
+            session['admin_id'] = data.admin_id
+            app.logger.info('Admin %s logged in', email)
+            return redirect('/admin/')
+
+        app.logger.warning('Failed admin login for %s from %s', email, request.remote_addr)
+        flash('Incorrect password.' if data else 'No admin account uses that email.')
 
     return render_template('admin/admin_login.html', login=login)
 
 ## route to logout
 @app.route('/admin/logout/')
 def admin_logout():
-    if session.get('admin_id') != None:
-        session.pop('admin_id')
+    session.pop('admin_id', None)
     flash('You are now logged out')
     return redirect('/admin/login/')
 
 #route to show movie details
 @app.route('/admin/movies/')
+@admin_required
 def admin_movies():
     ## movies waiting for approval first, then the newest
     movies = db.session.query(Movie).order_by(Movie.movie_status.asc(), Movie.movie_id.desc()).all()
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/all_movies.html', movies=movies,admin_session=admin_session)
+    return render_template('admin/all_movies.html', movies=movies)
 
 ##route for admin to add a movie
 @app.route('/admin/addmovie/',methods=['GET','POST'])
+@admin_required
 def admin_add_movie():
     actor = Actor.query.all()
     producer = Producer.query.all()
     studio =Studio.query.all()
     genre = Genre.query.all()
     movieform = MovieForm()
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-        if movieform.validate_on_submit():
-            title = request.form.get('title')
-            release_date= request.form.get('release_date')
-            summary = request.form.get('description')
-            movie_actor = request.form.get('actor')
-            movie_producer=request.form.get('producer') or None   # "Not listed"
-            movie_studio = request.form.get('studio')
-            movie_genre = request.form.getlist('genre')
-            poster = request.files.get('poster')
-            trailer = request.files.get('trailer')
 
-            poster_name, extension1 = None, None
-            trailer_name, extension2 = None, None
-            
-            ##checking if the poster was provided
-            if poster and poster.filename:
-                poster_filename = poster.filename
-                poster_ext = os.path.splitext(poster_filename)
-                extension1 = poster_ext[-1]
-        
-                ##generating new names
-                poster_name = secrets.token_hex(10)
-                poster.save(upload_path('poster', poster_name+extension1))
-               
-            
-            ##checking if the trailer was provided
-            if trailer and trailer.filename:
-                trailer_filename = trailer.filename
-                trailer_ext = os.path.splitext(trailer_filename)
-                extension2 = trailer_ext[-1]
+    if movieform.validate_on_submit():
+        poster = request.files.get('poster')
+        trailer = request.files.get('trailer')
+        movie_actor = request.form.get('actor')
 
-                trailer_name = secrets.token_hex(10)
-                trailer.save(upload_path('trailers', trailer_name+extension2))
-                
+        movie_details = Movie(movie_title=request.form.get('title'),
+                              producer_id=request.form.get('producer') or None,   # "Not listed"
+                              movie_release_date=movieform.release_date.data,
+                              movie_description=request.form.get('description'),
+                              production_studio=request.form.get('studio'),
+                              movie_poster=save_upload(poster, 'poster') if poster and poster.filename else None,
+                              movie_trailer=save_upload(trailer, 'trailers') if trailer and trailer.filename else None)
+        db.session.add(movie_details)
+        db.session.flush()   # gives the movie its id
 
-            movie_details = Movie(movie_title=title,producer_id=movie_producer,movie_release_date=release_date,movie_description=summary,production_studio=movie_studio,movie_poster=poster_name+extension1 if poster and poster.filename else None, movie_trailer=trailer_name + extension2 if trailer and trailer.filename else None )
+        if movie_actor:
+            db.session.add(MovieActor(movie_id=movie_details.movie_id, actor_id=int(movie_actor)))
+        for g_id in request.form.getlist('genre'):
+            db.session.add(MovieGenre(movie_id=movie_details.movie_id, genre_id=int(g_id)))
 
-            db.session.add(movie_details)
-            db.session.commit()
+        db.session.commit()
+        app.logger.info('Admin %s added movie %s', g.admin_session.admin_email, movie_details.movie_title)
+        flash('Movie has been succesfully added')
+        return redirect('/admin/movies/')
 
-            movie_id = movie_details.movie_id	
-
-            if movie_actor:  # Ensure there is an actor ID provided
-                movie_actor_data = MovieActor(movie_id=movie_id, actor_id=movie_actor)
-                db.session.add(movie_actor_data)
-                db.session.commit()
-
-            if movie_genre:
-                for g in movie_genre:
-                    movie_genre_data = MovieGenre(movie_id=movie_id,genre_id=int(g))
-                    db.session.add(movie_genre_data)
-
-            db.session.commit()
-
-            flash('Movie has been succesfully added')
-            return redirect('/admin/movies/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login')
-    
-
-    return render_template('admin/admin_add_movie.html', movieform=movieform,actor=actor,producer=producer,studio=studio,genre=genre, admin_session=admin_session)
+    return render_template('admin/admin_add_movie.html', movieform=movieform,actor=actor,producer=producer,studio=studio,genre=genre)
 
 ##admin can update the values of a movie in this route
 @app.route('/admin/movie/update/<int:id>/', methods=['GET','POST'])
+@admin_required
 def update_movies(id):
-    movie = db.session.query(Movie).get(id)
+    movie = db.get_or_404(Movie, id)
     actors = db.session.query(Actor).all()
-    actor = db.session.query(Actor).get(id)
-
     producers = db.session.query(Producer).all()
     studio = db.session.query(Studio).all()
     genre = db.session.query(Genre).all()
 
     movieform = MovieForm()
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
 
-        if movieform.validate_on_submit():
-            title = request.form.get('title')
-            release_date= request.form.get('release_date')
-            summary = request.form.get('description')
-            movie_actor = [a for a in request.form.getlist('actor') if a]   # actor ids; empty means "no change"
-            movie_producer=request.form.get('producer') or None   # "Not listed"
-            movie_studio = request.form.get('studio')
-            movie_genre = request.form.getlist('genre')
-            poster = request.files.get('poster')
-            trailer = request.files.get('trailer')
+    if movieform.validate_on_submit():
+        poster = request.files.get('poster')
+        trailer = request.files.get('trailer')
+        if poster and poster.filename:
+            movie.movie_poster = save_upload(poster, 'poster')
+        if trailer and trailer.filename:
+            movie.movie_trailer = save_upload(trailer, 'trailers')
 
-            ##getting the filenames
-            if poster and poster.filename:
-                poster_filename = poster.filename
-                poster_ext = os.path.splitext(poster_filename)
-                extension1 = poster_ext[-1]
-        
-                ##generating new names
-                poster_name = secrets.token_hex(10)
-                poster.save(upload_path('poster', poster_name+extension1))
-                movie.movie_poster = poster_name+extension1
-            
-            
-            if trailer and trailer.filename:
-                trailer_filename = trailer.filename
-                trailer_ext = os.path.splitext(trailer_filename)
-                extension2 = trailer_ext[-1]
+        ##updating data in the database
+        movie.movie_title = request.form.get('title')
+        movie.movie_release_date = movieform.release_date.data
+        movie.movie_description = request.form.get('description')
+        movie.production_studio = request.form.get('studio')
+        movie.producer_id = request.form.get('producer') or None   # "Not listed"
 
-                trailer_name = secrets.token_hex(10)
-                trailer.save(upload_path('trailers', trailer_name+extension2))
-                movie.movie_trailer = trailer_name+extension2
+        ## add any new cast member and genres (ones already on the movie are skipped)
+        existing_actor_ids = {ma.actor_id for ma in MovieActor.query.filter_by(movie_id=id)}
+        for actor_id in [int(a) for a in request.form.getlist('actor') if a]:   # empty means "no change"
+            if actor_id not in existing_actor_ids:
+                db.session.add(MovieActor(movie_id=id, actor_id=actor_id))
 
-            ##updating data in the database
-            movie.movie_title = title
-            movie.movie_release_date = release_date
-            movie.movie_description = summary
-            movie.production_studio = movie_studio
-            movie.producer_id = movie_producer
+        existing_genre_ids = {mg.genre_id for mg in MovieGenre.query.filter_by(movie_id=id)}
+        for genre_id in [int(x) for x in request.form.getlist('genre')]:
+            if genre_id not in existing_genre_ids:
+                db.session.add(MovieGenre(movie_id=id, genre_id=genre_id))
 
-            # Get all existing actors related to the movie
-            movieactors = MovieActor.query.filter_by(movie_id=id).all()
+        db.session.commit()
+        flash('Movie has been updated')
+        return redirect('/admin/movies/')
 
-            # creating a set of existing actor IDs for the current movie
-            existing_actor_ids = {ma.actor_id for ma in movieactors}
-
-            # list of actor IDs to add 
-            for actor_id in movie_actor: 
-                actor_id = int(actor_id)  
-
-                # checking if the actor already exists in the movie
-                if actor_id not in existing_actor_ids:
-                    
-                    new_movie_actor = MovieActor(movie_id=id, actor_id=actor_id)
-                    db.session.add(new_movie_actor)
-
-            ##this checks if the movie already has genres before updating
-            moviegenres = MovieGenre.query.filter_by(movie_id=id).all()
-
-            # creating a set of existing genre IDs for the current movie
-            existing_genre_ids = {mg.genre_id for mg in moviegenres}
-
-            # Looping through the genre IDs provided 
-            for genre_id in movie_genre:
-                genre_id = int(genre_id)  
-
-                # checking if the genre is already exists
-                if genre_id not in existing_genre_ids:
-                  
-                    new_movie_genre = MovieGenre(movie_id=id, genre_id=genre_id)
-                    db.session.add(new_movie_genre)
-
-            db.session.commit()
-            flash('Movie has been updated')
-            return redirect('/admin/movies/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login')
-    
-             
-    return render_template('admin/update_movie.html', movie=movie, movieform=movieform,  actor=actor, all_actors=actors, producers=producers,studio=studio, genre=genre,admin_session=admin_session)
+    return render_template('admin/update_movie.html', movie=movie, movieform=movieform, all_actors=actors, producers=producers,studio=studio, genre=genre)
 
 ##route to see the genres of a movie
 @app.route('/admin/movie/genre/<int:id>/')
+@admin_required
 def movie_genres(id):
-    movie = Movie.query.get(id)
+    movie = db.get_or_404(Movie, id)
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
-
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login')
-    return render_template('admin/view_movie_genres.html',movie=movie,genres=genres,admin_session=admin_session)
+    return render_template('admin/view_movie_genres.html',movie=movie,genres=genres)
 
 ## route to add a new genre to a movie
 @app.route('/admin/addgenre/<int:id>/', methods=['GET','POST'])
+@admin_required
 def admin_addgenre(id):
-    movie = Movie.query.get(id)
+    movie = db.get_or_404(Movie, id)
     genres = Genre.query.all()
 
     ##list to get all the ids of the current movie
     movie_genre_ids = [mg.genre_id for mg in MovieGenre.query.filter(MovieGenre.movie_id == id).all()]
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
 
-        if request.method == "POST":
-            genre = request.form.getlist('genre')
+    if request.method == "POST":
+        for g_id in request.form.getlist('genre'):
+            if int(g_id) not in movie_genre_ids:
+                db.session.add(MovieGenre(movie_id=id, genre_id=int(g_id)))
+        db.session.commit()
 
-            for g in genre:
-                db.session.add(MovieGenre(movie_id=id, genre_id=int(g)))
-            db.session.commit()
+        flash('Genre has been added')
+        return redirect(url_for('movie_genres', id=id))
 
-            flash('Genre has been added')
-            return redirect(url_for('movie_genres', id=id))  
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login')
-    
-        
-    return render_template('admin/add_moviegenre.html', movie=movie, genres=genres,movie_genre_ids=movie_genre_ids,admin_session=admin_session)
+    return render_template('admin/add_moviegenre.html', movie=movie, genres=genres,movie_genre_ids=movie_genre_ids)
 
 ##route to delete a genre from a movie
 @app.route('/admin/delgenre/<int:id>/<int:id2>')
+@admin_required
 def admin_delgenre(id,id2):
-    movie = Movie.query.get(id)
-    genre = MovieGenre.query.filter(MovieGenre.movie_id == id,MovieGenre.genre_id==id2).first()
-
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login')
-
-    return render_template('admin/del_movie_genre.html',movie=movie,genre=genre,admin_session=admin_session)
+    movie = db.get_or_404(Movie, id)
+    genre = MovieGenre.query.filter(MovieGenre.movie_id == id,MovieGenre.genre_id==id2).first_or_404()
+    return render_template('admin/del_movie_genre.html',movie=movie,genre=genre)
 
 ##confirm genre deletion
-@app.route('/admin/delgenre/confirm/<int:id>/<int:id2>/')
+@app.route('/admin/delgenre/confirm/<int:id>/<int:id2>/', methods=['POST'])
+@admin_required
 def admin_confirm_delgenre(id,id2):
-    genre = MovieGenre.query.filter(MovieGenre.movie_id == id,MovieGenre.genre_id==id2).first()
-    
-    if genre:
-        db.session.delete(genre)
-        db.session.commit()
-    
+    genre = MovieGenre.query.filter(MovieGenre.movie_id == id,MovieGenre.genre_id==id2).first_or_404()
+    db.session.delete(genre)
+    db.session.commit()
+
     flash('Genre has been deleted')
     return redirect(url_for('movie_genres', id=id))
 
 ##route to see all the actors of a movie
 @app.route('/admin/movie/actors/<int:id>/')
+@admin_required
 def movie_actors(id):
-    movie = Movie.query.get(id)
+    movie = db.get_or_404(Movie, id)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login')
-    return render_template('admin/view_movie_actors.html',movie=movie,actors=actors,admin_session=admin_session)
+    return render_template('admin/view_movie_actors.html',movie=movie,actors=actors)
 
 ## route to add a new actor to a movie
 @app.route('/admin/addactor/<int:id>/',methods=['GET','POST'])
+@admin_required
 def admin_addactor(id):
-    movie = Movie.query.get(id)
+    movie = db.get_or_404(Movie, id)
     actors = db.session.query(Actor).all()
-    
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
 
-        if request.method == 'POST':
-            name = request.form.get('actor')
-            add_actor = MovieActor(movie_id=id,actor_id=name)
-            
-            db.session.add(add_actor)
+    if request.method == 'POST':
+        actor = db.get_or_404(Actor, request.form.get('actor', type=int) or 0)
+        if not MovieActor.query.filter_by(movie_id=id, actor_id=actor.actor_id).first():
+            db.session.add(MovieActor(movie_id=id, actor_id=actor.actor_id))
             db.session.commit()
 
-            flash('Actor has been added')
-            return redirect(url_for('movie_actors', id=id))
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-   
+        flash('Actor has been added')
+        return redirect(url_for('movie_actors', id=id))
 
-    return render_template('admin/add_movieactor.html', movie=movie, all_actors=actors,admin_session=admin_session)
+    return render_template('admin/add_movieactor.html', movie=movie, all_actors=actors)
 
 ##route to delete actor from movie
 @app.route('/admin/delactor/<int:id>/<int:id2>')
+@admin_required
 def admin_delactor(id,id2):
-    movie = Movie.query.get(id)
-    actors = MovieActor.query.filter(MovieActor.actor_id == id2 , MovieActor.movie_id == id).first()
-
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-
-    return render_template('admin/del_movie_actor.html', actors=actors,movie=movie,admin_session=admin_session)
+    movie = db.get_or_404(Movie, id)
+    actors = MovieActor.query.filter(MovieActor.actor_id == id2 , MovieActor.movie_id == id).first_or_404()
+    return render_template('admin/del_movie_actor.html', actors=actors,movie=movie)
 
 ##this confirms the deletion
-@app.route('/admin/delactor/confirm/<int:id>/<int:id2>')
+@app.route('/admin/delactor/confirm/<int:id>/<int:id2>', methods=['POST'])
+@admin_required
 def admin_confirm_delactor(id,id2):
-    actors = MovieActor.query.filter(MovieActor.actor_id == id2 , MovieActor.movie_id == id).first()
-
-    if actors:
-        db.session.delete(actors)
-        db.session.commit()
+    actors = MovieActor.query.filter(MovieActor.actor_id == id2 , MovieActor.movie_id == id).first_or_404()
+    db.session.delete(actors)
+    db.session.commit()
 
     flash('Actor has been deleted')
     return redirect(url_for('movie_actors', id=id))
 
 ## route to view all the actors in the database
 @app.route('/admin/actors/')
+@admin_required
 def admin_actors():
     actors = Actor.query.all()
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    return render_template('admin/movie_actors.html',actors=actors,admin_session=admin_session)
+    return render_template('admin/movie_actors.html',actors=actors)
 
 ## route to add a new actor to the database
 @app.route('/admin/actors/add/', methods=['GET','POST'])
+@admin_required
 def add_actors():
     details = ActorDetail()
 
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
+    if details.validate_on_submit():
+        name = request.form.get('name')
+        picture = request.files.get('picture')
+
         ## checking if actors exists
-        
-        if details.validate_on_submit():
-            name = request.form.get('name')
-            bio = request.form.get('bio')
-            picture = request.files.get('picture')
-            
+        if Actor.query.filter(Actor.actor_name == name).first():
+            flash('Actor already exists')
+            return redirect('/admin/actors/')
 
-            existing_actor = Actor.query.filter(Actor.actor_name == name).first()
+        actor_photo = save_upload(picture, 'actors') if picture and picture.filename else 'default_actor.jpg'
+        db.session.add(Actor(actor_name=name, actor_bio=request.form.get('bio'), actor_photo=actor_photo))
+        db.session.commit()
 
-            if existing_actor:
+        flash('Actor has been added')
+        return redirect('/admin/actors/')
 
-                flash('Actor already exists')
-                return redirect('/admin/actors/')
-            else:
-                actor_photo = 'default_actor.jpg'
-
-                if picture and picture.filename != '':
-                    ##getting the filenames
-                    actor_filename = picture.filename
-
-                    actor_ext = os.path.splitext(actor_filename)
-                    extension = actor_ext[-1]
-                
-                    ##generating new names
-                    actor_name = secrets.token_hex(10)
-                    picture.save(upload_path('actors', actor_name+extension))
-                    actor_photo = actor_name+extension
-
-                actors = Actor(actor_name=name,actor_bio=bio,actor_photo=actor_photo)
-
-                db.session.add(actors)
-                db.session.commit()
-
-                flash('Actor has been added')
-                return redirect('/admin/actors/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/add_actor.html',admin_session=admin_session,details=details)
+    return render_template('admin/add_actor.html',details=details)
 
 ## route for updating actor details
 @app.route('/admin/actors/update/<int:id>/',methods=['GET','POST'])
+@admin_required
 def update_actor(id):
-    actor = Actor.query.get(id)
+    actor = db.get_or_404(Actor, id)
     details = ActorDetail()
 
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-        if details.validate_on_submit():
-            name = request.form.get('name')
-            bio = request.form.get('bio')
-            picture = request.files.get('picture')
+    if details.validate_on_submit():
+        picture = request.files.get('picture')
+        if picture and picture.filename:
+            actor.actor_photo = save_upload(picture, 'actors')
 
-            if picture and picture.filename != '':
-                ##getting the filenames
-                actor_filename = picture.filename
+        ## uppdating the actor details
+        actor.actor_name = request.form.get('name')
+        actor.actor_bio = request.form.get('bio')
+        db.session.commit()
 
-                
-                actor_ext = os.path.splitext(actor_filename)
-                extension = actor_ext[-1]
-            
-                ##generating new names
-                actor_name = secrets.token_hex(10)
-                picture.save(upload_path('actors', actor_name+extension))
-                actor.actor_photo = actor_name+extension
+        flash('Actor has been updated')
+        return redirect('/admin/actors/')
 
-            ## uppdating the actor details
-            actor.actor_name = name
-            actor.actor_bio = bio
-            db.session.commit()
-
-            flash('Actor has been updated')
-            return redirect('/admin/actors/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-
-    
-    
-    return render_template('admin/update_actor.html',details=details, actor=actor,admin_session=admin_session)
+    return render_template('admin/update_actor.html',details=details, actor=actor)
 
 ##route for deleting an actor
 @app.route('/admin/actors/delete/<int:id>/')
+@admin_required
 def delete_actor(id):
-    actor = Actor.query.get(id)
+    actor = db.get_or_404(Actor, id)
+    return render_template('admin/delete_actor.html',actor=actor)
 
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/delete_actor.html',actor=actor,admin_session=admin_session)
-
-##route to confirm delete
-@app.route('/confirm/delete/actor/<int:id>')
+##route to confirm delete (POST only, so a link or a page can't delete anything by itself)
+@app.route('/confirm/delete/actor/<int:id>', methods=['POST'])
+@admin_required
 def confirm_actor_delete(id):
-    actor = Actor.query.get(id)
+    actor = db.get_or_404(Actor, id)
 
-    if actor:
-        ## take them out of every cast first, otherwise those movies keep a cast entry with no actor and their pages break
-        MovieActor.query.filter_by(actor_id=id).delete()
-        db.session.delete(actor)
-        db.session.commit()
-    
+    ## take them out of every cast first, otherwise those movies keep a cast entry with no actor and their pages break
+    MovieActor.query.filter_by(actor_id=id).delete()
+    db.session.delete(actor)
+    db.session.commit()
+    app.logger.info('Admin %s deleted actor %s', g.admin_session.admin_email, actor.actor_name)
+
     flash('Actor has been deleted')
     return redirect('/admin/actors/')
 
 
 ## route to see more producers
 @app.route('/admin/producers/')
+@admin_required
 def admin_producers():
     producers = Producer.query.all()
-
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/admin_producers.html', producers=producers,admin_session=admin_session)
+    return render_template('admin/admin_producers.html', producers=producers)
 
 ## route for adding produce
 @app.route('/admin/producers/add/', methods=['GET','POST'])
+@admin_required
 def add_producer():
     producer = ProducerDetail()
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
 
-        ##check if producer exists
-        if producer.validate_on_submit():
-            name = request.form.get('name')
+    if producer.validate_on_submit():
+        db.session.add(Producer(producer_name=request.form.get('name')))
+        db.session.commit()
 
-            add_producer = Producer(producer_name=name)
+        flash('Producer has been added')
+        return redirect('/admin/producers/')
 
-            db.session.add(add_producer)
-            db.session.commit()
-
-            flash('Producer has been added')
-            return redirect('/admin/producers/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-
-    return render_template('admin/add_producer.html', producer=producer,admin_session=admin_session)
+    return render_template('admin/add_producer.html', producer=producer)
 
 
 ## this is the route for updating producer details
 @app.route('/admin/producers/update/<int:id>/', methods=['GET','POST'])
+@admin_required
 def update_producer(id):
-    producerdetails = Producer.query.get(id)
+    producerdetails = db.get_or_404(Producer, id)
     producer = ProducerDetail()
 
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
+    if producer.validate_on_submit():
+        producerdetails.producer_name = request.form.get('name')
+        db.session.commit()
 
-        if producer.validate_on_submit():
-            name = request.form.get('name')
-            producerdetails.producer_name = name
+        flash('Producer has been updated')
+        return redirect('/admin/producers/')
 
-            db.session.commit()
-
-            flash('Producer has been updated')
-            return redirect('/admin/producers/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/update_producer.html',producerdetails=producerdetails,producer=producer,admin_session=admin_session)
+    return render_template('admin/update_producer.html',producerdetails=producerdetails,producer=producer)
 
 ##this route is for deleting a producer
 @app.route('/admin/delete/producer/<int:id>/')
+@admin_required
 def delete_producer(id):
-    producer = Producer.query.get(id)
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    return render_template('admin/delete_producer.html',producer=producer,admin_session=admin_session)
+    producer = db.get_or_404(Producer, id)
+    return render_template('admin/delete_producer.html',producer=producer)
 
 ##route for confirming the deletion of a producer
-@app.route('/confirm/delete/producer/<int:id>/')
+@app.route('/confirm/delete/producer/<int:id>/', methods=['POST'])
+@admin_required
 def confirm_delete_producer(id):
-    producer = Producer.query.get(id)
+    producer = db.get_or_404(Producer, id)
+    db.session.delete(producer)   # their movies keep going, with the producer shown as "Not listed"
+    db.session.commit()
+    app.logger.info('Admin %s deleted producer %s', g.admin_session.admin_email, producer.producer_name)
 
-    if producer:
-        db.session.delete(producer)
-        db.session.commit()
-    
-    flash('producer has been deleted')
+    flash('Producer has been deleted')
     return redirect('/admin/producers/')
 
 ##this route is for displaying all genres
 @app.route('/admin/genres/')
+@admin_required
 def admin_genre():
     genres = Genre.query.all()
-
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/admin_genre.html', genres=genres,admin_session=admin_session)
+    return render_template('admin/admin_genre.html', genres=genres)
 
 ## this route is for adding new genres
 @app.route('/admin/genre/add/', methods=['GET','POST'])
+@admin_required
 def add_genre():
     genre = GenreDetail()
 
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
+    if genre.validate_on_submit():
+        name = request.form.get('name')
 
-        ## check if genre exists
-        if genre.validate_on_submit():
-            name = request.form.get('name')
+        ## checking if the genre exists in the database already
+        if Genre.query.filter(Genre.genre_name == name).first():
+            flash('Genre already exists')
+            return redirect('/admin/genres/')
 
-            existing_genre = Genre.query.filter(Genre.genre_name == name).first()
+        db.session.add(Genre(genre_name=name))
+        db.session.commit()
 
-            ## checking if the genre exists in the database already
-            if existing_genre:
-                flash('Genre already exists')
-                return redirect('/admin/genres/')
-            else:
-                genredetails = Genre(genre_name=name)
-                
-                db.session.add(genredetails)
-                db.session.commit()
+        flash('Genre has been added')
+        return redirect('/admin/genres/')
 
-                flash('Genre has been added')
-                return redirect('/admin/genres/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    
-    
-    return render_template('admin/add_genre.html' ,genre=genre,admin_session=admin_session )
+    return render_template('admin/add_genre.html' ,genre=genre)
 
 ## this is the route for deleting a genre
 @app.route('/admin/delete/genre/<int:id>/')
+@admin_required
 def admin_delete_genre(id):
-    genre = Genre.query.get(id)
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    return render_template('admin/delete_genre.html',genre=genre,admin_session=admin_session)
+    genre = db.get_or_404(Genre, id)
+    return render_template('admin/delete_genre.html',genre=genre)
 
 ## this routes confirms the deletion of genre
-@app.route('/confirm/delete/genre/<int:id>/')
+@app.route('/confirm/delete/genre/<int:id>/', methods=['POST'])
+@admin_required
 def confirm_delete_genre(id):
-    genre = Genre.query.get(id)
+    genre = db.get_or_404(Genre, id)
 
-    if genre:
-        ## untag the movies first, otherwise they keep an empty genre
-        MovieGenre.query.filter_by(genre_id=id).delete()
-        db.session.delete(genre)
-        db.session.commit()
-    
+    ## untag the movies first, otherwise they keep an empty genre
+    MovieGenre.query.filter_by(genre_id=id).delete()
+    db.session.delete(genre)
+    db.session.commit()
+    app.logger.info('Admin %s deleted genre %s', g.admin_session.admin_email, genre.genre_name)
+
     flash('Genre has been deleted')
     return redirect('/admin/genres/')
 
-# route to change the status of a movie
+# route to change the status of a movie (called from the Movies page)
 @app.route('/admin/update_movie_status/', methods=['POST'])
+@admin_required
 def update_movie_status():
-    movie_id = request.form.get('movieid')
     new_status = request.form.get('status')
+    if new_status not in ('pending', 'approved'):
+        return jsonify({'error': 'Status must be pending or approved.'}), 400
 
-    movie = Movie.query.get(movie_id)
-    if movie:
-        movie.movie_status = new_status
-        db.session.commit()
-        return make_response('', 204)  # Return 204 No Content
-    else:
+    movie = db.session.get(Movie, request.form.get('movieid', type=int) or 0)
+    if movie is None:
         return make_response('', 404)  # Return 404 Not Found if the movie doesn't exist
+
+    movie.movie_status = new_status
+    db.session.commit()
+    app.logger.info('Admin %s set %s to %s', g.admin_session.admin_email, movie.movie_title, new_status)
+    return make_response('', 204)  # Return 204 No Content
 
 ## route to view all movie studio
 @app.route('/admin/studios/')
+@admin_required
 def admin_studio():
     studio = Studio.query.all()
-
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-
-    return render_template('admin/admin_studio.html',studio=studio,admin_session=admin_session)
+    return render_template('admin/admin_studio.html',studio=studio)
 
 ##route to add a new studio
 @app.route('/admin/studio/add/', methods=['GET','POST'])
+@admin_required
 def admin_add_studio():
     studio = StudioDetail()
 
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
+    if studio.validate_on_submit():
+        name = request.form.get('name')
 
+        ## checking if the studio exists in the database already
+        if Studio.query.filter(Studio.studio_name == name).first():
+            flash('Studio already exists')
+            return redirect('/admin/studios/')
 
-     ## check if studio exists
-        if studio.validate_on_submit():
-            name = request.form.get('name')
+        db.session.add(Studio(studio_name=name))
+        db.session.commit()
 
-            existing_studio = Studio.query.filter(Studio.studio_name == name).first()
+        flash('Studio has been added')
+        return redirect('/admin/studios/')
 
-            ## checking if the genre exists in the database already
-            if existing_studio:
-                flash('Studio already exists')
-                return redirect('/admin/studios/')
-            else:
-                studiodetails = Studio(studio_name=name)
-                
-                db.session.add(studiodetails)
-                db.session.commit()
+    return render_template('admin/add_studio.html', studio=studio)
 
-                flash('Studio has been added')
-                return redirect('/admin/studios/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/add_studio.html', studio=studio,admin_session=admin_session)
-   
 ##route to delete a studio
 @app.route('/admin/delete/studio/<int:id>/')
+@admin_required
 def delete_studio(id):
-
-    studio = Studio.query.get(id)
-
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/delete_studio.html',studio=studio,admin_session=admin_session)
+    studio = db.get_or_404(Studio, id)
+    return render_template('admin/delete_studio.html',studio=studio)
 
 ## route to confirm deletion
-@app.route('/confirm/delete/studio/<int:id>/')
+@app.route('/confirm/delete/studio/<int:id>/', methods=['POST'])
+@admin_required
 def confirm_delete_studio(id):
-    studio = Studio.query.get(id)
+    studio = db.get_or_404(Studio, id)
+    db.session.delete(studio)   # its movies keep going, with the studio shown as "Not listed"
+    db.session.commit()
+    app.logger.info('Admin %s deleted studio %s', g.admin_session.admin_email, studio.studio_name)
 
-    if studio:
-        db.session.delete(studio)
-        db.session.commit()
-    
     flash('Studio has been deleted')
     return redirect('/admin/studios/')
 
 ## route to update studio
 @app.route('/admin/update/studio/<int:id>/',methods=['GET','POST'])
+@admin_required
 def update_studio(id):
-    studiodetails = Studio.query.get(id)
+    studiodetails = db.get_or_404(Studio, id)
     studio = StudioDetail()
 
-    data = session.get('admin_id')
-    if data != None:
-        admin_session = get_user_byid(data)
+    if studio.validate_on_submit():
+        studiodetails.studio_name = request.form.get('name')
+        db.session.commit()
 
-        if studio.validate_on_submit():
-            name = request.form.get('name')
-            studiodetails.studio_name = name
+        flash('Studio has been updated')
+        return redirect('/admin/studios/')
 
-            db.session.commit()
-
-            flash('Studio has been updated')
-            return redirect('/admin/studios/')
-    else:
-        flash('You need to be logged in as an admin')
-        return redirect('/admin/login/')
-    
-    return render_template('admin/update_studio.html',studiodetails=studiodetails,studio=studio,admin_session=admin_session)
+    return render_template('admin/update_studio.html',studiodetails=studiodetails,studio=studio)

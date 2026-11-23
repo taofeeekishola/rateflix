@@ -1,7 +1,8 @@
+import logging
 import os
 from datetime import date
 
-from flask import Flask, abort, render_template, send_from_directory, session
+from flask import Flask, abort, g, render_template, send_from_directory, session
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
 from flask_migrate import Migrate
@@ -26,6 +27,10 @@ def _database_url(url):
 
 def create_app():
     app = Flask(__name__,instance_relative_config=True)
+
+    ## app.logger.info(...) lines (admin actions, failed admin logins) show up in the Railway logs.
+    ## Errors are logged with their full traceback automatically.
+    app.logger.setLevel(logging.INFO)
 
     ## Railway sits in front of the app and handles https. This makes Flask use the
     ## original https address in redirects instead of http (browsers block http on an https page).
@@ -73,18 +78,23 @@ def create_app():
     migrate = Migrate(app,db)
     csrf.init_app(app)
 
-    ## values every template can use: the signed-in member (or None) and the current year
+    ## values every template can use: the signed-in member (or None), the logged-in admin on admin pages
+    ## (set by @admin_required), and the current year
     @app.context_processor
     def template_globals():
         from rateflix.models import Member
         member_id = session.get('member_id')
-        member = db.session.get(Member, member_id) if member_id is not None else None
-        return {'current_member': member, 'current_year': date.today().year}
+        member = None
+        if member_id is not None and not g.get('skip_db'):
+            member = db.session.get(Member, member_id)
+        return {'current_member': member, 'admin_session': g.get('admin_session'), 'current_year': date.today().year}
 
     ## the genres with the most live movies, for the footer links (only runs when the footer is drawn)
     @app.template_global()
     def footer_genres(limit=6):
         from rateflix.models import Genre, MovieGenre, Movie
+        if g.get('skip_db'):
+            return []
         total = db.func.count(MovieGenre.movie_id)
         rows = (db.session.query(Genre, total)
                 .join(MovieGenre, MovieGenre.genre_id == Genre.genre_id)
@@ -107,6 +117,28 @@ def create_app():
     def not_found(error):
         return render_template('error.html', title='Page not found',
                                message='The page you were looking for does not exist or was removed.'), 404
+
+    @app.errorhandler(405)
+    def wrong_method(error):
+        return render_template('error.html', title='That link does not work on its own',
+                               message='This action has to be started from its page, for example by pressing the button on a confirmation page.'), 405
+
+    ## anything that crashes. Flask has already written the full error to the log at this point.
+    ## Undo whatever the failed request half-saved, then show a calm page. The page is drawn without
+    ## touching the database, in case the database is what failed.
+    @app.errorhandler(500)
+    def server_error(error):
+        try:
+            db.session.rollback()
+        except Exception:
+            app.logger.exception('Rollback after an error also failed')
+        g.skip_db = True
+        try:
+            return render_template('error.html', title='Something went wrong',
+                                   message='The problem has been logged. Try again in a moment, or go back to the movies.'), 500
+        except Exception:
+            app.logger.exception('The error page itself failed')
+            return 'Something went wrong. Try again in a moment.', 500
 
     ## serves /static/uploads/... from the upload folder first, then from the files in the repo,
     ## so the templates can keep using /static/uploads/... paths

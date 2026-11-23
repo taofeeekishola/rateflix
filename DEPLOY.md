@@ -88,3 +88,21 @@ python starter.py
 ```
 
 Your `instance/config.py` keeps working unchanged.
+
+## Running the tests
+
+The tests use a throwaway SQLite database in a temporary folder, so they never touch your MySQL data,
+even if `instance/config.py` points at it.
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
+They cover who can open admin pages and delete things, 404s for unknown ids, the error pages,
+sign-up and log-in, member movies, reviews, ratings, filters and search.
+
+## Logs
+
+Errors are written to the log with their full traceback, and so are admin actions
+(logins, failed logins, deletes, status changes). On Railway: open the service, then **Deployments → View logs**.

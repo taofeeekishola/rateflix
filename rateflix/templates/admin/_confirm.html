@@ -6,9 +6,11 @@
     <h1>{{ title }}</h1>
     <p class="rf-muted mb-2">{{ message }}</p>
     {% if note %}<p class="rf-muted mb-0">{{ note }}</p>{% endif %}
-    <div class="rf-form-actions mt-4">
-        <a class="btn btn-danger" href="{{ confirm_href }}">{{ button }}</a>
+    {# a form, not a link: deleting needs a POST with the form token, so nothing can be deleted just by visiting an address #}
+    <form class="rf-form-actions mt-4" method="post" action="{{ confirm_href }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger" type="submit">{{ button }}</button>
         <a class="btn btn-quiet" href="{{ cancel_href }}">Cancel</a>
-    </div>
+    </form>
 </div>
 {% endmacro %}

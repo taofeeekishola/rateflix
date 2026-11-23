@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import render_template,request,redirect,flash,url_for,session,jsonify,abort
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy import extract
+from sqlalchemy.exc import IntegrityError
 
 from rateflix import app, upload_path
 from rateflix.forms import Register,Login,MovieForm,MovieReview,UpdateProfileForm
@@ -89,7 +90,7 @@ def poster_wall(limit=12):
 
 ##funcion to always retrive the user id
 def get_user_byid(id):
-    data = Member.query.get(id)
+    data = db.session.get(Member, id)
     return data
 
 ##home page route
@@ -175,18 +176,27 @@ def user_signup():
 
         data = Member(member_firstname=firstname,member_lastname=lastname,member_username=username,member_email=email,member_password=hashed)
 
+        ## say which one is taken; the database's unique keys still catch two sign-ups racing each other
+        if Member.query.filter_by(member_username=username).first():
+            flash('That username is already taken.')
+            return render_template('user/signup.html', signup=signup, posters=poster_wall())
+        if Member.query.filter_by(member_email=email).first():
+            flash('An account already uses that email. Log in instead.')
+            return render_template('user/signup.html', signup=signup, posters=poster_wall())
+
         try:
             ## storing the data into the database
             db.session.add(data)
             db.session.commit()
-
-            ##using the id of the user to create a session
-            session['member_id'] = data.member_id
-            return redirect('/')
-        except:
+        except IntegrityError:
+            ## only a duplicate username or email lands here; anything else is a real error and goes to the error page
             db.session.rollback()
             flash('That email or username is already taken.')
-            return redirect('/user/signup/')
+            return render_template('user/signup.html', signup=signup, posters=poster_wall())
+
+        ##using the id of the user to create a session
+        session['member_id'] = data.member_id
+        return redirect('/')
 
 
     return render_template('user/signup.html', signup=signup, posters=poster_wall())
@@ -302,7 +312,7 @@ def user_addmovie():
 
         if movie.validate_on_submit():
             title = request.form.get('title')
-            release_date= request.form.get('release_date')
+            release_date = movie.release_date.data   # a date object from the form
             summary = request.form.get('description')
             movie_actor = request.form.get('actor')
             movie_producer=request.form.get('producer') or None   # "Not listed"
@@ -341,9 +351,7 @@ def user_addmovie():
 ## this route will have information about the movie
 @app.route('/movie/info/<int:id>',methods=['GET','POST'])
 def movie_info(id):
-    movies = Movie.query.get(id)
-    if movies is None:
-        abort(404)
+    movies = db.get_or_404(Movie, id)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
 
@@ -374,7 +382,7 @@ def movie_info(id):
 @app.route('/ajax/movie/review/',methods=['POST'])
 def submit_review():
     data = session.get('member_id')
-    member = Member.query.get(data) if data is not None else None
+    member = db.session.get(Member, data) if data is not None else None
     if member is None:
         return jsonify({'error': 'Please log in to post a review.'}), 401
 
@@ -382,7 +390,7 @@ def submit_review():
     movieid = request.form.get('movieId', type=int)
     if not review:
         return jsonify({'error': 'Please write something before posting.'}), 400
-    if movieid is None or Movie.query.get(movieid) is None:
+    if movieid is None or db.session.get(Movie, movieid) is None:
         return jsonify({'error': 'Movie not found.'}), 404
 
     ## a double click or a slow connection can send the same review twice: keep only one copy
@@ -406,7 +414,7 @@ def submit_review():
 ##route is used to delete a review: allowed for the person who wrote it and for admins
 @app.route('/ajax/movie/review/<int:review_id>/delete/', methods=['POST'])
 def delete_review(review_id):
-    user_review = Review.query.get(review_id)
+    user_review = db.session.get(Review, review_id)
     if user_review is None:
         return jsonify({'deleted': True})
 
@@ -438,7 +446,10 @@ def user_moviesadded():
 @app.route('/user/movie/update/<int:id>/', methods=['GET','POST'])
 def user_update_movie(id):
 
-    movie = Movie.query.get(id)
+    movie = db.get_or_404(Movie, id)
+    ## members can only change their own movies, and only before an admin approves them
+    if session.get('member_id') is not None and (movie.added_by != session.get('member_id') or movie.movie_status != 'pending'):
+        abort(404)
     actors = db.session.query(Actor).all()
     producers = db.session.query(Producer).all()
     studio = db.session.query(Studio).all()
@@ -451,7 +462,7 @@ def user_update_movie(id):
 
         if movieform.validate_on_submit():
             title = request.form.get('title')
-            release_date= request.form.get('release_date')
+            release_date = movieform.release_date.data   # a date object from the form
             summary = request.form.get('description')
             movie_actor = [a for a in request.form.getlist('actor') if a]   # actor ids; empty means "no change"
             movie_producer=request.form.get('producer') or None   # "Not listed"
@@ -523,14 +534,14 @@ def filter_movies():
 @app.route('/user/submitrating/', methods=['POST'])
 def user_rating():
     data = session.get('member_id')
-    if data is None or Member.query.get(data) is None:
+    if data is None or db.session.get(Member, data) is None:
         return jsonify({'error': 'Please log in to rate this movie.'}), 401
 
     rating = request.form.get('rating', type=int)
     movieid = request.form.get('movieId', type=int)
     if rating is None or not 1 <= rating <= 5:
         return jsonify({'error': 'Please pick between 1 and 5 stars.'}), 400
-    if movieid is None or Movie.query.get(movieid) is None:
+    if movieid is None or db.session.get(Movie, movieid) is None:
         return jsonify({'error': 'Movie not found.'}), 404
 
     ## one rating per person per movie: rating again replaces the old one
