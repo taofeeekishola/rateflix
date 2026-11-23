@@ -1,4 +1,5 @@
 import secrets,os
+from datetime import datetime
 from flask import render_template,request,redirect,flash,url_for,session,jsonify
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy import extract
@@ -6,6 +7,11 @@ from sqlalchemy import extract
 from rateflix import app, upload_path
 from rateflix.forms import Register,Login,MovieForm,MovieReview,UpdateProfileForm
 from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Review,Rating
+
+## a movie's average rating (rounded to 1 decimal) and how many ratings it has
+def movie_rating_summary(movie_id):
+    average, count = db.session.query(db.func.avg(Rating.rating_score), db.func.count(Rating.rating_id)).filter(Rating.movie_id == movie_id).one()
+    return (round(float(average), 1) if average is not None else 0), count
 
 ##funcion to always retrive the user id
 def get_user_byid(id):
@@ -228,7 +234,6 @@ def movie_info(id):
     movies = Movie.query.get(id)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
-    ratings = Rating.query.filter(Rating.movie_id == id).all()
     moviess = Movie.query.filter(Movie.movie_status == 'approved').all()
     
     genre_ids = [genre.genre_id for genre in genres]
@@ -238,47 +243,73 @@ def movie_info(id):
             Movie.query.join(MovieGenre, Movie.movie_id == MovieGenre.movie_id).filter(MovieGenre.genre_id.in_(genre_ids),Movie.movie_status == 'approved',Movie.movie_id != id).limit(5)
         )
     
-    if ratings:
-        total_ratings = sum(r.rating_score for r in ratings)
-        average_rating = total_ratings / len(ratings)
-    else:
-        average_rating = 0
-  
+    average_rating, rating_count = movie_rating_summary(id)
 
     ##user review form
     review = MovieReview()
 
     data = session.get('member_id')
+    my_rating = 0
     if data != None:
         user_session = get_user_byid(data)
+        mine = Rating.query.filter_by(member_id=data, movie_id=id).first()
+        if mine:
+            my_rating = mine.rating_score
 
     else:
         user_session = None
     all_reviews = db.session.query(Review).filter(Review.movie_id == id).order_by(Review.review_date.desc()).all()
 
-    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating,moviess=similar_movies)
+    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating,rating_count=rating_count,my_rating=my_rating,moviess=similar_movies)
 
 ##route is used to submit reviews
 @app.route('/ajax/movie/review/',methods=['POST'])
 def submit_review():
-    review = request.form.get('reviewData')
-    movieid = request.form.get('movieId')
     data = session.get('member_id')
-    member = Member.query.get(data)
+    member = Member.query.get(data) if data is not None else None
+    if member is None:
+        return jsonify({'error': 'Please log in to post a review.'}), 401
 
-    user_review = Review(member_id=data, movie_id=movieid, review_content=review)
-    db.session.add(user_review)
-    db.session.commit()
+    review = (request.form.get('reviewData') or '').strip()
+    movieid = request.form.get('movieId', type=int)
+    if not review:
+        return jsonify({'error': 'Please write something before posting.'}), 400
+    if movieid is None or Movie.query.get(movieid) is None:
+        return jsonify({'error': 'Movie not found.'}), 404
 
-    all_reviews = Review.query.filter(Review.movie_id == movieid).all()
+    ## a double click or a slow connection can send the same review twice: keep only one copy
+    user_review = Review.query.filter_by(member_id=data, movie_id=movieid, review_content=review).first()
+    duplicate = user_review is not None
+    if not duplicate:
+        user_review = Review(member_id=data, movie_id=movieid, review_content=review)
+        db.session.add(user_review)
+        db.session.commit()
 
- 
     # Return only the newly submitted review
     return jsonify({
-        'member_username':member.member_username,
+        'review_id': user_review.review_id,
+        'member_username': member.member_username,
         'review_content': user_review.review_content,
-        'review_date': user_review.review_date.strftime('%Y-%m-%d %H:%M:%S')
+        'review_date': user_review.review_date.strftime('%Y-%m-%d'),
+        'duplicate': duplicate
     })
+
+##route is used to delete a review: allowed for the person who wrote it and for admins
+@app.route('/ajax/movie/review/<int:review_id>/delete/', methods=['POST'])
+def delete_review(review_id):
+    user_review = Review.query.get(review_id)
+    if user_review is None:
+        return jsonify({'deleted': True})
+
+    is_author = session.get('member_id') is not None and session.get('member_id') == user_review.member_id
+    is_admin = session.get('admin_id') is not None
+    if not (is_author or is_admin):
+        return jsonify({'error': 'You can only delete your own reviews.'}), 403
+
+    ## replies to the review are removed by the database too (ON DELETE CASCADE)
+    Review.query.filter_by(review_id=review_id).delete()
+    db.session.commit()
+    return jsonify({'deleted': True})
 
 
 #route to see all the movies user has added
@@ -418,26 +449,27 @@ def filter_movies():
 ##route to submit movie rating
 @app.route('/user/submitrating/', methods=['POST'])
 def user_rating():
-    try:
-        rating = request.form.get('rating')
-        movieid = request.form.get('movieId')
-        data = session.get('member_id')
+    data = session.get('member_id')
+    if data is None or Member.query.get(data) is None:
+        return jsonify({'error': 'Please log in to rate this movie.'}), 401
 
-        if not rating or not movieid or not data:
-            raise ValueError("Missing data")
-        
-        # Check if the user has already rated this movie
-        existing_rating = Rating.query.filter_by(member_id=data, movie_id=movieid).first()
-        if existing_rating:
-            return jsonify({'message': 'You have already rated this movie'}), 200
+    rating = request.form.get('rating', type=int)
+    movieid = request.form.get('movieId', type=int)
+    if rating is None or not 1 <= rating <= 5:
+        return jsonify({'error': 'Please pick between 1 and 5 stars.'}), 400
+    if movieid is None or Movie.query.get(movieid) is None:
+        return jsonify({'error': 'Movie not found.'}), 404
 
-        user_rating = Rating(member_id=data, movie_id=movieid, rating_score=rating)
-        db.session.add(user_rating)
-        db.session.commit()
+    ## one rating per person per movie: rating again replaces the old one
+    user_rating = Rating.query.filter_by(member_id=data, movie_id=movieid).first()
+    if user_rating:
+        user_rating.rating_score = rating
+        user_rating.rating_date = datetime.utcnow()
+    else:
+        db.session.add(Rating(member_id=data, movie_id=movieid, rating_score=rating))
+    db.session.commit()
 
-        return jsonify({'message': f'Rating {rating} received successfully!'})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    average_rating, rating_count = movie_rating_summary(movieid)
+    return jsonify({'your_rating': rating, 'average_rating': average_rating, 'rating_count': rating_count})
     
    

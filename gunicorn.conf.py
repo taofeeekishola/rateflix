@@ -7,6 +7,11 @@ import sys
 bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 workers = int(os.environ.get('WEB_CONCURRENCY', '2'))
 
+## each worker serves several requests at once, so a long trailer download
+## doesn't make everyone else (posting a review, loading a page) wait in line
+worker_class = 'gthread'
+threads = int(os.environ.get('GUNICORN_THREADS', '8'))
+
 ## trailer uploads can be large, so allow more than the default 30 seconds per request
 timeout = 120
 

@@ -13,7 +13,8 @@
           <div class="col-md-6">
               <div class="d-flex flex-row justify-content-between">
                 
-                  <p class="mb-1"><strong>Ratflex Rating:</strong> {{ average_rating }}/5</i></p>
+                  <p class="mb-1"><strong>RateFlix Rating:</strong> <span id="average_rating">{{ "%.1f"|format(average_rating) }}</span>/5
+                      <small class="text-muted">(<span id="rating_count">{{ rating_count }} {{ 'rating' if rating_count == 1 else 'ratings' }}</span>)</small></p>
                   {% if session.get('member_id') != None %}
                   <p class="mb-1"><strong>Your Rating:</strong>
                       <i class="fa-solid fa-star submit-star myrate" id="submit_star_1" data-rating="1" ></i>
@@ -21,21 +22,14 @@
                       <i class="fa-solid fa-star submit-star myrate" id="submit_star_3" data-rating="3"></i>
                       <i class="fa-solid fa-star submit-star myrate" id="submit_star_4" data-rating="4"></i>
                       <i class="fa-solid fa-star submit-star myrate" id="submit_star_5" data-rating="5"></i>
-                      
+                      <span id="my_rating_text">{% if my_rating %}{{ my_rating }}/5{% endif %}</span>
                   </p>
-                  <button class="btn btn-outline-primary btn-sm" id="submit_rating">Submit</button>
+                  <button class="btn btn-outline-primary btn-sm" id="submit_rating">{{ 'Update' if my_rating else 'Submit' }}</button>
                   {% else %}
-                   <p class="mb-1"><strong>Your Rating:</strong>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_1" data-rating="1" ></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_2" data-rating="2"></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_3" data-rating="3"></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_4" data-rating="4"></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_5" data-rating="5"></i>
-                      
-                  </p>
-                  <button class="btn btn-outline-primary btn-sm" id="submit_rating" disabled>Submit</button>
+                   <p class="mb-1"><strong>Your Rating:</strong> <a href="/user/login/">Log in</a> to rate</p>
                   {% endif %}
               </div>
+              <small id="rating_msg" class="d-block text-end"></small>
           </div>
         </div>
 
@@ -54,7 +48,7 @@
                     Trailer not available
                 </div>
                 {% else %}
-                 <video controls class="img-fluid w-100 h-100" style="object-fit: cover;">
+                 <video controls preload="metadata" class="img-fluid w-100 h-100" style="object-fit: cover;">
                     <source src="/static/uploads/trailers/{{movies.movie_trailer}}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
@@ -165,7 +159,8 @@
                   {{ review.csrf_token }}
                   <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
                   {{ review.review(class='form-control mb-2', placeholder='My Review' )}}
-                  {{ review.submit_review(class='btn btn-primary') }} 
+                  {{ review.submit_review(class='btn btn-primary') }}
+                  <small id="review_msg" class="text-danger ms-2"></small>
                 {% else %}
                     <p class="mb-2"><a href="/user/login/">Log in</a> or <a href="/user/signup/">sign up</a> to write a review.</p>
                     {{ review.csrf_token }}
@@ -183,7 +178,7 @@
          <div class="row mt-5">
             <div class="col-md-12">
                 <div id="reviews-section">
-                    <p id="show"></p>
+                    <div id="show"></div>
                     {% if all_reviews %}
                         {% for reviews in all_reviews %}
                             <div class="card mb-3" style="max-width: 500px;">
@@ -193,14 +188,16 @@
                                     <footer class="blockquote-footer">
                                         {{ reviews.review_date.strftime('%Y-%m-%d') }}
                                     </footer>
+                                    {% if session.get('admin_id') != None or (session.get('member_id') != None and session.get('member_id') == reviews.member_id) %}
+                                    <button type="button" class="btn btn-link btn-sm text-danger p-0 delete-review" data-review-id="{{ reviews.review_id }}">Delete</button>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}
-                    {% else %}
-                        <div class="alert alert-primary" role="alert">
-                            No Reviews Available
-                        </div>
                     {% endif %}
+                    <div class="alert alert-primary" role="alert" id="no_reviews" {% if all_reviews %}style="display: none;"{% endif %}>
+                        No Reviews Available
+                    </div>
                 </div>
             </div>
         </div>
@@ -209,99 +206,137 @@
 
 {% block scripts %}
          <script>
-          //this means the user did not rate
             $(document).ready(function(){
-              
+              var csrfToken = $('input[name="csrf_token"]').val();
+              var movieId = $('#movie').val();
+
+              // the server's error message, or a general one (e.g. the page was open too long)
+              function errorText(xhr) {
+                  if (xhr.responseJSON && xhr.responseJSON.error) { return xhr.responseJSON.error; }
+                  return 'Something went wrong. Please refresh the page and try again.';
+              }
+
+              // builds a review card; the review text is added as plain text, never as HTML
+              function reviewCard(r) {
+                  var $card = $('<div class="card mb-3" style="max-width: 500px;"></div>');
+                  var $body = $('<div class="card-body"></div>').appendTo($card);
+                  $('<h5 class="card-title"></h5>').text(r.member_username).appendTo($body);
+                  $('<p class="card-text"></p>').text(r.review_content).appendTo($body);
+                  $('<footer class="blockquote-footer"></footer>').text(r.review_date).appendTo($body);
+                  $('<button type="button" class="btn btn-link btn-sm text-danger p-0 delete-review">Delete</button>')
+                      .attr('data-review-id', r.review_id).appendTo($body);
+                  return $card;
+              }
+
+              // post a review: clear the box and lock the button straight away so it can't be sent twice
               $('#submit_review').click(function(event){
                 event.preventDefault();
-                var review = $('#review').val();
-                var movieId = $('#movie').val();
-                var csrfToken = $('input[name="csrf_token"]').val();
+                var $btn = $(this);
+                var $box = $('#review');
+                var text = $.trim($box.val());
+                $('#review_msg').text('');
+                if (!text) {
+                    $('#review_msg').text('Please write something before posting.');
+                    return;
+                }
+
+                $btn.prop('disabled', true).val('Posting...');
+                $box.val('');
 
                 $.ajax({
                   url: '/ajax/movie/review/',
                   type:'POST',
-                  data: {reviewData:review,movieId:movieId, csrf_token: csrfToken},
-
+                  data: {reviewData: text, movieId: movieId, csrf_token: csrfToken},
                   success: function(resp){
-                   var newReviewHtml = `<div class="card mb-3" style="max-width: 500px;">
-                                            <div class="card-body">
-                                                <h5 class="card-title">${resp.member_username}</h5>
-                                                <p class="card-text">${resp.review_content}</p>
-                                                <footer class="blockquote-footer">
-                                                    ${resp.review_date}
-                                                </footer>
-                                            </div>
-                                        </div>`;
-                   $('#show').prepend(newReviewHtml);
-
-                  $('#review').val('');
-                    },
-                    error: function(err){
-                      console.log(err);
-                    }
-                  })
-                })
-              
-             
-              var rating_data = 0;
-
-              // Hover effect for stars
-              $('.submit-star').mouseenter(function() {
-                  var rating = $(this).data('rating');
-                  $('.submit-star').each(function() {
-                      if ($(this).data('rating') <= rating) {
-                          $(this).css('color', 'gold');
-                      } else {
-                          $(this).css('color', '');
+                      if (!resp.duplicate) {
+                          $('#show').prepend(reviewCard(resp));
                       }
-                  });
-              }).mouseleave(function() {
-                  // Reset color after hover
-                  $('.submit-star').each(function() {
-                      if ($(this).data('rating') <= rating_data) {
-                          $(this).css('color', 'gold');
-                      } else {
-                          $(this).css('color', '');
+                      $('#no_reviews').hide();
+                  },
+                  error: function(xhr){
+                      $box.val(text);   // put the text back so nothing is lost
+                      $('#review_msg').text(errorText(xhr));
+                  },
+                  complete: function(){
+                      $btn.prop('disabled', false).val('Submit');
+                  }
+                });
+              });
+
+              // delete a review (shown only to its author and to admins)
+              $('#reviews-section').on('click', '.delete-review', function(){
+                  if (!confirm('Delete this review?')) { return; }
+                  var $btn = $(this);
+                  var $card = $btn.closest('.card');
+                  $btn.prop('disabled', true).text('Deleting...');
+                  $.ajax({
+                      url: '/ajax/movie/review/' + $btn.data('review-id') + '/delete/',
+                      type: 'POST',
+                      data: {csrf_token: csrfToken},
+                      success: function(){
+                          $card.remove();
+                          if ($('#reviews-section .card').length === 0) { $('#no_reviews').show(); }
+                      },
+                      error: function(xhr){
+                          $btn.prop('disabled', false).text('Delete');
+                          alert(errorText(xhr));
                       }
                   });
               });
 
-              // Click event to select rating
+              // ratings: the stars show the person's saved rating until they pick another
+              var rating_data = {{ my_rating or 0 }};
+
+              function paintStars(upTo) {
+                  $('.submit-star').each(function() {
+                      $(this).css('color', $(this).data('rating') <= upTo ? 'gold' : '');
+                  });
+              }
+              paintStars(rating_data);
+
+              $('.submit-star').mouseenter(function() {
+                  paintStars($(this).data('rating'));
+              }).mouseleave(function() {
+                  paintStars(rating_data);
+              });
+
               $('.submit-star').click(function() {
                   rating_data = $(this).data('rating');
-                  $('.submit-star').each(function() {
-                      if ($(this).data('rating') <= rating_data) {
-                          $(this).css('color', 'gold');
-                      } else {
-                          $(this).css('color', '');
-                      }
-                  });
+                  paintStars(rating_data);
+                  $('#rating_msg').removeClass('text-danger text-success').text('');
               });
 
-              // Submit rating via AJAX to Flask route
+              function ratingMessage(text, isError) {
+                  $('#rating_msg').removeClass('text-danger text-success')
+                      .addClass(isError ? 'text-danger' : 'text-success').text(text);
+              }
+
               $('#submit_rating').click(function() {
                   if (rating_data === 0) {
-                      alert('Please select a rating before submitting.');
+                      ratingMessage('Pick a number of stars first.', true);
                       return;
                   }
-                  
-                  var movieId = $('#movie').val(); // Get the movie ID
-                  var csrfToken = $('input[name="csrf_token"]').val();
+                  var $btn = $(this);
+                  $btn.prop('disabled', true).text('Saving...');
                   $.ajax({
-                      url: '/user/submitrating/', // Flask route URL
+                      url: '/user/submitrating/',
                       type: 'POST',
-                      data: { rating: rating_data, movieId: movieId,csrf_token: csrfToken }, // Send data as URL-encoded
-                      success: function(response) {
-                         if (response.message === 'You have already rated this movie') {
-                            alert(response.message); // Show friendly message
-                        } else {
-                            alert('Rating submitted successfully: ' + response.message);
-                        }
+                      data: { rating: rating_data, movieId: movieId, csrf_token: csrfToken },
+                      success: function(resp) {
+                          rating_data = resp.your_rating;
+                          paintStars(rating_data);
+                          $('#my_rating_text').text(resp.your_rating + '/5');
+                          $('#average_rating').text(Number(resp.average_rating).toFixed(1));
+                          $('#rating_count').text(resp.rating_count + (resp.rating_count === 1 ? ' rating' : ' ratings'));
+                          $btn.text('Update');
+                          ratingMessage('Rating saved', false);
                       },
-                      error: function(xhr, status, error) {
-                          console.error('Error details:', xhr.responseText);
-                          alert('An error occurred: ' + xhr.responseText);
+                      error: function(xhr) {
+                          $btn.text($('#my_rating_text').text() ? 'Update' : 'Submit');
+                          ratingMessage(errorText(xhr), true);
+                      },
+                      complete: function() {
+                          $btn.prop('disabled', false);
                       }
                   });
               });
