@@ -76,19 +76,56 @@
     </main>
 
     <footer class="rf-footer">
-        <div class="rf-wrap rf-footer__inner">
-            <a class="rf-brand" href="{{ url_for('home') }}"><span class="rf-mark" aria-hidden="true"><i class="fa-solid fa-star"></i></span>RateFlix</a>
-            <nav aria-label="Footer">
-                <a href="{{ url_for('home') }}">Movies</a>
-                {% if current_member %}
-                <a href="/user/profile/">Your profile</a>
-                <a href="/user/add_movie/">Add a movie</a>
-                {% else %}
-                <a href="/user/login/">Log in</a>
-                <a href="/user/signup/">Sign up</a>
+        <div class="rf-wrap">
+            <div class="rf-footer__grid">
+                <div class="rf-footer__about">
+                    <a class="rf-brand" href="{{ url_for('home') }}"><span class="rf-mark" aria-hidden="true"><i class="fa-solid fa-star"></i></span>RateFlix</a>
+                    <p>Rate and review the movies you watch, and see what everyone else thought of them.</p>
+                    {% if not current_member %}
+                    <a class="btn btn-primary btn-sm" href="/user/signup/">Create a free account</a>
+                    {% endif %}
+                </div>
+
+                <nav class="rf-footer__col" aria-labelledby="footer-browse">
+                    <h2 class="rf-footer__title" id="footer-browse">Browse</h2>
+                    <ul>
+                        <li><a href="{{ url_for('home') }}#browse">All movies</a></li>
+                        <li><a href="{{ url_for('search') }}">Search movies</a></li>
+                    </ul>
+                </nav>
+
+                {% set top_genres = footer_genres() %}
+                {% if top_genres %}
+                <nav class="rf-footer__col" aria-labelledby="footer-genres">
+                    <h2 class="rf-footer__title" id="footer-genres">Popular genres</h2>
+                    <ul>
+                        {% for g in top_genres %}
+                        <li><a href="/?genre={{ g.genre_id }}#browse">{{ g.genre_name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </nav>
                 {% endif %}
-            </nav>
-            <p>&copy; {{ current_year }} RateFlix. Rate and review the movies you watch.</p>
+
+                <nav class="rf-footer__col" aria-labelledby="footer-account">
+                    <h2 class="rf-footer__title" id="footer-account">Your account</h2>
+                    <ul>
+                        {% if current_member %}
+                        <li><a href="/user/profile/">Your profile</a></li>
+                        <li><a href="/user/movieadded/">Your submissions</a></li>
+                        <li><a href="/user/add_movie/">Add a movie</a></li>
+                        <li><a href="/user/logout/">Log out</a></li>
+                        {% else %}
+                        <li><a href="/user/login/">Log in</a></li>
+                        <li><a href="/user/signup/">Sign up</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="rf-footer__bar">
+                <p>&copy; {{ current_year }} RateFlix</p>
+                <a href="#main" class="rf-footer__top">Back to top<i class="fa-solid fa-arrow-up ms-2" aria-hidden="true"></i></a>
+            </div>
         </div>
     </footer>
 

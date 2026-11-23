@@ -882,23 +882,56 @@ a.rf-chip:hover { color: var(--rf-accent-text); border-color: var(--rf-accent-te
   .rf-table--stack .rf-cell-clip { max-width: 60%; -webkit-line-clamp: 3; }
 }
 
-/* ---------- Footer ---------- */
+/* ---------- Footer ----------
+   A dark band in both themes, matching the dark stage at the top of the page. */
 .rf-main:has(.rf-auth) + .rf-footer { margin-top: 0; }
 .rf-footer {
   flex-shrink: 0;
-  border-top: 1px solid var(--rf-line);
-  margin-top: clamp(2.5rem, 6vw, 4rem);
-  padding-block: 2rem;
-  color: var(--rf-muted);
+  margin-top: clamp(3rem, 7vw, 5rem);
+  background: var(--rf-stage);
+  color: rgba(255, 255, 255, .68);
   font-size: .9375rem;
+  border-top: 3px solid var(--rf-accent);
 }
-.rf-footer__inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem 2rem; }
-.rf-footer .rf-brand { font-size: 1.35rem; }
-.rf-footer .rf-mark { width: 1.5rem; height: 1.5rem; font-size: .7rem; border-radius: 6px; }
-.rf-footer nav { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
-.rf-footer nav a { color: var(--rf-muted); text-decoration: none; }
-.rf-footer nav a:hover { color: var(--rf-accent-text); }
-.rf-footer p { margin: 0; }
+.rf-footer__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 2.5rem 2rem;
+  padding-block: clamp(2.75rem, 6vw, 4rem) 2.5rem;
+}
+.rf-footer__about { max-width: 34ch; }
+.rf-footer .rf-brand { color: #fff; font-size: 1.75rem; }
+.rf-footer__about p { margin: .9rem 0 1.25rem; line-height: 1.6; }
+.rf-footer__title {
+  font-family: "Jost", sans-serif;
+  font-size: .9375rem;
+  font-weight: 600;
+  color: #fff;
+  margin: .35rem 0 1rem;
+  letter-spacing: 0;
+}
+.rf-footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.rf-footer a:not(.btn):not(.rf-brand) { color: rgba(255, 255, 255, .68); text-decoration: none; }
+.rf-footer a:not(.btn):not(.rf-brand):hover { color: #fff; text-decoration: underline; }
+.rf-footer a:focus-visible { outline-color: #fff; }
+.rf-footer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem 2rem;
+  padding-block: 1.25rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, .12);
+  font-size: .875rem;
+}
+.rf-footer__bar p { margin: 0; }
+@media (max-width: 991.98px) {
+  .rf-footer__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rf-footer__about { grid-column: 1 / -1; max-width: 48ch; }
+}
+@media (max-width: 575.98px) {
+  .rf-footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 1.5rem; }
+}
 
 /* ---------- Admin layout ---------- */
 .rf-admin { display: flex; min-height: 100vh; }

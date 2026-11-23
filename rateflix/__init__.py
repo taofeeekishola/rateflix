@@ -81,6 +81,20 @@ def create_app():
         member = db.session.get(Member, member_id) if member_id is not None else None
         return {'current_member': member, 'current_year': date.today().year}
 
+    ## the genres with the most live movies, for the footer links (only runs when the footer is drawn)
+    @app.template_global()
+    def footer_genres(limit=6):
+        from rateflix.models import Genre, MovieGenre, Movie
+        total = db.func.count(MovieGenre.movie_id)
+        rows = (db.session.query(Genre, total)
+                .join(MovieGenre, MovieGenre.genre_id == Genre.genre_id)
+                .join(Movie, Movie.movie_id == MovieGenre.movie_id)
+                .filter(Movie.movie_status == 'approved')
+                .group_by(Genre.genre_id)
+                .order_by(total.desc(), Genre.genre_name)
+                .limit(limit))
+        return [genre for genre, _ in rows]
+
     ## friendly pages instead of the plain browser error pages
     @app.errorhandler(CSRFError)
     def form_expired(error):
