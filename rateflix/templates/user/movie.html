@@ -167,6 +167,7 @@
                   {{ review.review(class='form-control mb-2', placeholder='My Review' )}}
                   {{ review.submit_review(class='btn btn-primary') }} 
                 {% else %}
+                    <p class="mb-2"><a href="/user/login/">Log in</a> or <a href="/user/signup/">sign up</a> to write a review.</p>
                     {{ review.csrf_token }}
                     <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
                     {{ review.review(class='form-control mb-2', placeholder='My Review', disabled=True )}}

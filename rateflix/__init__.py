@@ -3,6 +3,7 @@ import os
 from flask import Flask, abort, send_from_directory
 from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import safe_join
 
 from rateflix.models import db
@@ -23,6 +24,10 @@ def _database_url(url):
 
 def create_app():
     app = Flask(__name__,instance_relative_config=True)
+
+    ## Railway sits in front of the app and handles https. This makes Flask use the
+    ## original https address in redirects instead of http (browsers block http on an https page).
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     ## local development: settings come from instance/config.py (not in git)
     app.config.from_pyfile('config.py',silent=True)
