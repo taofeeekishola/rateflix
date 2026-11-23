@@ -13,6 +13,31 @@ def movie_rating_summary(movie_id):
     average, count = db.session.query(db.func.avg(Rating.rating_score), db.func.count(Rating.rating_id)).filter(Rating.movie_id == movie_id).one()
     return (round(float(average), 1) if average is not None else 0), count
 
+## "More like this": approved movies ranked by how many genres they share with this one,
+## then by RateFlix rating, then newest first. Each movie appears once, and if fewer than
+## `limit` movies share a genre, the rest of the slots are filled with the next best movies.
+def similar_movies_for(movie_id, limit=5):
+    genre_ids = [g.genre_id for g in MovieGenre.query.filter_by(movie_id=movie_id)]
+
+    shared = (db.session.query(MovieGenre.movie_id.label('movie_id'), db.func.count(MovieGenre.genre_id).label('shared'))
+              .filter(MovieGenre.genre_id.in_(genre_ids))
+              .group_by(MovieGenre.movie_id)
+              .subquery())
+    ratings = (db.session.query(Rating.movie_id.label('movie_id'), db.func.avg(Rating.rating_score).label('average'))
+               .group_by(Rating.movie_id)
+               .subquery())
+
+    return (Movie.query
+            .outerjoin(shared, shared.c.movie_id == Movie.movie_id)
+            .outerjoin(ratings, ratings.c.movie_id == Movie.movie_id)
+            .filter(Movie.movie_status == 'approved', Movie.movie_id != movie_id)
+            .order_by(db.func.coalesce(shared.c.shared, 0).desc(),
+                      db.func.coalesce(ratings.c.average, 0).desc(),
+                      Movie.movie_release_date.desc(),
+                      Movie.movie_id.desc())
+            .limit(limit)
+            .all())
+
 ##funcion to always retrive the user id
 def get_user_byid(id):
     data = Member.query.get(id)
@@ -234,15 +259,10 @@ def movie_info(id):
     movies = Movie.query.get(id)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
-    moviess = Movie.query.filter(Movie.movie_status == 'approved').all()
-    
-    genre_ids = [genre.genre_id for genre in genres]
 
-    ## getting all the movies with the same genres as the movie the member is reading about
-    similar_movies = (
-            Movie.query.join(MovieGenre, Movie.movie_id == MovieGenre.movie_id).filter(MovieGenre.genre_id.in_(genre_ids),Movie.movie_status == 'approved',Movie.movie_id != id).limit(5)
-        )
-    
+    ## "More like this": movies that share the most genres with this one
+    similar_movies = similar_movies_for(id)
+
     average_rating, rating_count = movie_rating_summary(id)
 
     ##user review form
