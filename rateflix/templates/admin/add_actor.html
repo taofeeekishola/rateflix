@@ -1,31 +1,23 @@
 {% extends 'admin/admin_base.html' %}
+{% import '_macros.html' as ui %}
+{% block admintitle %}Add an actor{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Add Actors</h1>
-                
-                    <form method="post" action="{{ url_for('add_actors') }}" novalidate enctype="multipart/form-data">
-                        {{ details.csrf_token }}
+<a class="rf-back" href="/admin/actors/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Actors</a>
+<div class="rf-admin-head">
+    <div>
+        <h1>Add an actor</h1>
+        <p>You can then add them to a movie's cast.</p>
+    </div>
+</div>
 
-                        {{ details.name(class_='form-control mb-3', placeholder='Full Name') }}
-                        {% if details.name.errors %}
-                            {% for error in details.name.errors %}
-                                <p class="text-danger" > {{ error }} </p>
-                            {% endfor %}
-                        {% endif %}
-
-
-                        {{ details.bio(class_='form-control mb-3', placeholder='Bio') }}
-                        
-                        {{ details.picture(class_='form-control mb-3') }}
-                        {% if details.picture.errors %}
-                            {% for error in details.picture.errors %}
-                                <p class="text-danger" > {{ error }} </p>
-                            {% endfor %}
-                        {% endif %}
-
-                        {{ details.add(class_='btn btn-primary') }}
-
-                    </form>
-                </div>
+<form class="rf-panel rf-panel__body" method="post" enctype="multipart/form-data" novalidate style="max-width: 640px;">
+    {{ details.csrf_token }}
+    {{ ui.field(details.name, label='Name', required=True, autofocus=True, autocomplete='off') }}
+    {{ ui.field(details.bio, label='Bio', rows=4, placeholder='A short line about them') }}
+    {{ ui.field(details.picture, label='Photo', hint='JPG or PNG. A square photo looks best.', accept='.jpg,.png') }}
+    <div class="rf-form-actions">
+        <button class="btn btn-primary" type="submit">Add actor</button>
+        <a class="btn btn-quiet" href="/admin/actors/">Cancel</a>
+    </div>
+</form>
 {% endblock %}

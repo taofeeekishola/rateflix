@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField,PasswordField,SubmitField,DateField,TextAreaField,SelectMultipleField
 from flask_wtf.file import FileField, FileAllowed,FileRequired
-from wtforms.validators import DataRequired, Email, EqualTo
+from wtforms.validators import DataRequired, Email, EqualTo, InputRequired, Optional
 
 
 class Login(FlaskForm):
@@ -26,17 +26,17 @@ class UpdateProfileForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired(message='Please enter your First Name')])
     last_name = StringField('Last Name', validators=[DataRequired(message='Please enter your Last Name')])
     profile_picture = FileField("Profile Picture", validators=[FileAllowed(["jpg", "png"], "Invalid File Format")])
-    date_of_birth = DateField('Date of Birth', format='%Y-%m-%d')
+    date_of_birth = DateField('Date of Birth', format='%Y-%m-%d', validators=[Optional()])
     update = SubmitField('Update')
 
 class MovieForm(FlaskForm):
     title = StringField('Title',validators=[DataRequired(message='Enter the title of the movie')])
-    release_date = DateField('Release Date', format='%Y-%m-%d')
+    release_date = DateField('Release Date', format='%Y-%m-%d', validators=[InputRequired(message='Pick the release date')])
     description = TextAreaField('Plot Summary')
     poster  = FileField("Poster",validators=[FileAllowed(["jpg","png"],"Invalid File Format")])
     trailer = FileField("Trailer",validators=[FileAllowed(["mp4"],"Invalid File Format")])
     producer = StringField('Producer')
-    studio = StringField('Production Studio',validators=[DataRequired(message="Studio missing")])
+    studio = StringField('Production Studio',validators=[DataRequired(message="Choose a studio")])
     submit = SubmitField('Submit')
 
 

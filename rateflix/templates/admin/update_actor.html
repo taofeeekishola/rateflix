@@ -1,32 +1,40 @@
 {% extends 'admin/admin_base.html' %}
+{% import '_macros.html' as ui %}
+{% block admintitle %}Edit {{ actor.actor_name }}{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Update Actor Deatils</h1>
-                
-                    <form method="post" action="/admin/actors/update/{{ actor.actor_id }}/" novalidate enctype="multipart/form-data">
-                        {{ details.csrf_token }}
+<a class="rf-back" href="/admin/actors/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Actors</a>
+<div class="rf-admin-head">
+    <div>
+        <h1>Edit {{ actor.actor_name }}</h1>
+        <p>Changes show on every movie they're in.</p>
+    </div>
+</div>
 
-                        {{ details.name(class_='form-control mb-3', placeholder='Full Name', value=actor.actor_name ) }}
-                        {% if details.name.errors %}
-                            {% for error in details.name.errors %}
-                                <p class="text-danger" > {{ error }} </p>
-                            {% endfor %}
-                        {% endif %}
+<form class="rf-panel rf-panel__body" method="post" enctype="multipart/form-data" novalidate style="max-width: 640px;">
+    {{ details.csrf_token }}
+    {{ ui.field(details.name, label='Name', required=True, value=details.name.data or actor.actor_name, autocomplete='off') }}
 
-                        <textarea class="form-control mb-3" id="bio" name="bio"> {{actor.actor_bio }} </textarea>
-                        
+    <div class="rf-field">
+        <label class="rf-label" for="bio">Bio</label>
+        <textarea class="form-control" id="bio" name="bio" rows="4">{{ details.bio.data if details.bio.data is not none else (actor.actor_bio or '').strip() }}</textarea>
+    </div>
 
-                        
-                        {{ details.picture(class_='form-control mb-3') }}
-                        {% if details.picture.errors %}
-                            {% for error in details.picture.errors %}
-                                <p class="text-danger" > {{ error }} </p>
-                            {% endfor %}
-                        {% endif %}
+    <div class="rf-field{% if details.picture.errors %} is-invalid{% endif %}">
+        <label class="rf-label" for="picture">Photo</label>
+        {% if actor.actor_photo and actor.actor_photo != 'default_actor.jpg' %}
+            <div class="rf-current-file">
+                <img class="rf-avatar" style="--size: 2.5rem; width: 2.5rem; aspect-ratio: 1;" src="/static/uploads/actors/{{ actor.actor_photo }}" alt="">
+                Current photo. Choose a file to replace it.
+            </div>
+        {% endif %}
+        {{ details.picture(class_='form-control', accept='.jpg,.png') }}
+        <p class="rf-hint">JPG or PNG.</p>
+        {{ ui.errors(details.picture) }}
+    </div>
 
-                        {{ details.add(class_='btn btn-primary') }}
-
-                    </form>
-                </div>
+    <div class="rf-form-actions">
+        <button class="btn btn-primary" type="submit">Save changes</button>
+        <a class="btn btn-quiet" href="/admin/actors/">Cancel</a>
+    </div>
+</form>
 {% endblock %}

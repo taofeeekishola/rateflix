@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash,check_password_hash
 
 from rateflix import app, upload_path
 from rateflix.forms import Login,MovieForm,ActorDetail,ProducerDetail,GenreDetail,StudioDetail
-from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Admin
+from rateflix.models import db,Member,Studio,Producer,Genre,Actor,Movie,MovieActor,MovieGenre,Admin,Review,Rating
 
 
 ##funcion to always retrive the admin id
@@ -29,15 +29,25 @@ def admin_password_matches(admin, password):
 ## this is the route that displays the user details
 @app.route('/admin/')
 def admin():
-    user = Member.query.all()
+    user = Member.query.order_by(Member.member_join_date.desc()).all()
     data = session.get('admin_id')
     if data != None:
         admin_session = get_user_byid(data)
     else:
         flash('You need to be logged in as an admin')
         return redirect('/admin/login/')
-    
-    return render_template('admin/admin.html',admin_session=admin_session, user=user)
+
+    ## numbers for the dashboard
+    stats = {
+        'members': len(user),
+        'approved': Movie.query.filter(Movie.movie_status == 'approved').count(),
+        'pending': Movie.query.filter(Movie.movie_status == 'pending').count(),
+        'reviews': Review.query.count(),
+        'ratings': Rating.query.count(),
+    }
+    pending_movies = Movie.query.filter(Movie.movie_status == 'pending').order_by(Movie.movie_id.desc()).limit(5).all()
+
+    return render_template('admin/admin.html',admin_session=admin_session, user=user, stats=stats, pending_movies=pending_movies)
 
 ##route to allow the admin login
 @app.route('/admin/login/', methods=['GET','POST'])
@@ -54,10 +64,10 @@ def admin_login():
                 session['admin_id'] = data.admin_id
                 return redirect('/admin/')
             else:
-                flash('Incorrect Pasword')
+                flash('Incorrect password.')
                 redirect('/admin/login/')
         else:
-            flash('Incorrect Email')
+            flash('No admin account uses that email.')
             redirect('/admin/login/')
 
     return render_template('admin/admin_login.html', login=login)
@@ -73,7 +83,8 @@ def admin_logout():
 #route to show movie details
 @app.route('/admin/movies/')
 def admin_movies():
-    movies = db.session.query(Movie).all()
+    ## movies waiting for approval first, then the newest
+    movies = db.session.query(Movie).order_by(Movie.movie_status.asc(), Movie.movie_id.desc()).all()
     data = session.get('admin_id')
     if data != None:
         admin_session = get_user_byid(data)
@@ -99,7 +110,7 @@ def admin_add_movie():
             release_date= request.form.get('release_date')
             summary = request.form.get('description')
             movie_actor = request.form.get('actor')
-            movie_producer=request.form.get('producer')
+            movie_producer=request.form.get('producer') or None   # "Not listed"
             movie_studio = request.form.get('studio')
             movie_genre = request.form.getlist('genre')
             poster = request.files.get('poster')
@@ -177,8 +188,8 @@ def update_movies(id):
             title = request.form.get('title')
             release_date= request.form.get('release_date')
             summary = request.form.get('description')
-            movie_actor = request.form.getlist('actor')
-            movie_producer=request.form.get('producer')
+            movie_actor = [a for a in request.form.getlist('actor') if a]   # actor ids; empty means "no change"
+            movie_producer=request.form.get('producer') or None   # "Not listed"
             movie_studio = request.form.get('studio')
             movie_genre = request.form.getlist('genre')
             poster = request.files.get('poster')
@@ -284,9 +295,7 @@ def admin_addgenre(id):
             genre = request.form.getlist('genre')
 
             for g in genre:
-                new_genres = MovieGenre(movie_id=id, genre_id=int(g))
-
-            db.session.add(new_genres)
+                db.session.add(MovieGenre(movie_id=id, genre_id=int(g)))
             db.session.commit()
 
             flash('Genre has been added')
@@ -515,6 +524,8 @@ def confirm_actor_delete(id):
     actor = Actor.query.get(id)
 
     if actor:
+        ## take them out of every cast first, otherwise those movies keep a cast entry with no actor and their pages break
+        MovieActor.query.filter_by(actor_id=id).delete()
         db.session.delete(actor)
         db.session.commit()
     
@@ -678,6 +689,8 @@ def confirm_delete_genre(id):
     genre = Genre.query.get(id)
 
     if genre:
+        ## untag the movies first, otherwise they keep an empty genre
+        MovieGenre.query.filter_by(genre_id=id).delete()
         db.session.delete(genre)
         db.session.commit()
     

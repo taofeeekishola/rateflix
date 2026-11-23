@@ -1,45 +1,41 @@
 {% extends 'base.html' %}
+{% import '_macros.html' as ui %}
+{% block title %}Edit profile | RateFlix{% endblock %}
+
 {% block content %}
-    <div class="row mt-5">
-        <div class="col-md-6 offset-3">
-            <h2>UPDATE PROFILE</h2>
-            <form action="/user/update/profile/" method="post" enctype="multipart/form-data" novalidate>
-                {{ update.csrf_token }}
-
-                {{update.first_name.label}}
-                {{ update.first_name(class_='form-control mb-3', placeholder='First Name', value=user_session.member_firstname) }}
-                {% if update.first_name.errors %}
-                    {% for error in update.first_name.errors %}
-                        <p class="text-danger"> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-
-                {{update.last_name.label}}
-                {{ update.last_name(class_='form-control mb-3', placeholder='Last Name', value=user_session.member_lastname) }}
-                {% if update.last_name.errors %}
-                    {% for error in update.last_name.errors %}
-                        <p class="text-danger"> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-
-                {{update.profile_picture.label}}
-                {{ update.profile_picture(class_='form-control mb-3') }}
-                {% if update.profile_picture.errors %}
-                    {% for error in update.profile_picture.errors %}
-                        <p class="text-danger"> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-                
-                <label>Bio</label>
-                <textarea class="form-control mb-3" name="bio" >{{ user_session.member_bio }} </textarea>
-
-                {{update.date_of_birth.label}}
-                {{ update.date_of_birth(class_='form-control mb-3', value=user_session.member_date_of_birth) }}
-
-               <button class="btn btn-primary" type="submit" >Update</button>
-          
-            </form>
-        </div>
+<section class="rf-wrap rf-section" style="max-width: 760px;">
+    <a class="rf-back" href="/user/profile/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back to your profile</a>
+    <div class="rf-page-head">
+        <h1>Edit profile</h1>
+        <p>Your username and email stay the same.</p>
     </div>
-{% endblock %}
 
+    <form class="rf-panel rf-panel__body" action="/user/update/profile/" method="post" enctype="multipart/form-data" novalidate>
+        {{ update.csrf_token }}
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            {{ ui.avatar(user_session, '4.5rem') }}
+            <div class="flex-fill">
+                {{ ui.field(update.profile_picture, label='Profile photo', hint='JPG or PNG.', accept='.jpg,.jpeg,.png', wrap='mb-0') }}
+            </div>
+        </div>
+
+        <div class="rf-form-grid">
+            {{ ui.field(update.first_name, label='First name', value=user_session.member_firstname, autocomplete='given-name') }}
+            {{ ui.field(update.last_name, label='Last name', value=user_session.member_lastname, autocomplete='family-name') }}
+        </div>
+
+        <div class="rf-field">
+            <label class="rf-label" for="bio">Bio</label>
+            <textarea class="form-control" id="bio" name="bio" rows="4" placeholder="A line or two about the movies you like">{{ (user_session.member_bio or '').strip() }}</textarea>
+        </div>
+
+        {{ ui.field(update.date_of_birth, label='Date of birth', hint='Optional.', value=user_session.member_date_of_birth or '', wrap='mb-4', style='max-width: 240px') }}
+
+        <div class="rf-form-actions">
+            <button class="btn btn-primary" type="submit">Save changes</button>
+            <a class="btn btn-quiet" href="/user/profile/">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

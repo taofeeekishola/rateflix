@@ -1,34 +1,104 @@
 {% extends 'admin/admin_base.html' %}
+{% block admintitle %}Dashboard{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Members</h1>
-                    
-                   <table class="table">
-                        <thead>
-                            <tr>
-                                <td>S/N</td>
-                                <td>First Name</td>
-                                <td>Last Name</td>
-                                <td>Username</td>
-                                <td>Email</td>
-                                <td>Movies Added</td>
-                                <td>Date Joined</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for u in user %}
-                            <tr>
-                                <td> {{ loop.index }} </td>
-                                <td> {{ u.member_firstname }} </td>
-                                <td> {{ u.member_lastname }} </td>
-                                <td> {{ u.member_username }} </td>
-                                <td> {{ u.member_email }} </td>
-                                <td> {{ u.movies|count }} </td>
-                                <td> {{ u.member_join_date }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                   </table>
+<div class="rf-admin-head">
+    <div>
+        <h1>Dashboard</h1>
+        <p>{% if stats.pending %}{{ stats.pending }} {{ 'movie is' if stats.pending == 1 else 'movies are' }} waiting for your approval.{% else %}Nothing is waiting for approval.{% endif %}</p>
+    </div>
+    <a href="/admin/addmovie/" class="btn btn-primary"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Add a movie</a>
+</div>
+
+<div class="rf-stats">
+    <a class="rf-stat" href="#members">
+        <span class="rf-stat__label"><i class="fa-solid fa-users" aria-hidden="true"></i>Members</span>
+        <span class="rf-stat__value">{{ stats.members }}</span>
+    </a>
+    <a class="rf-stat" href="/admin/movies/">
+        <span class="rf-stat__label"><i class="fa-solid fa-film" aria-hidden="true"></i>Movies live</span>
+        <span class="rf-stat__value">{{ stats.approved }}</span>
+    </a>
+    <a class="rf-stat{% if stats.pending %} is-attention{% endif %}" href="/admin/movies/">
+        <span class="rf-stat__label"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>Waiting for approval</span>
+        <span class="rf-stat__value">{{ stats.pending }}</span>
+    </a>
+    <div class="rf-stat">
+        <span class="rf-stat__label"><i class="fa-solid fa-star" aria-hidden="true"></i>Ratings</span>
+        <span class="rf-stat__value">{{ stats.ratings }}</span>
+    </div>
+    <div class="rf-stat">
+        <span class="rf-stat__label"><i class="fa-regular fa-comment" aria-hidden="true"></i>Reviews</span>
+        <span class="rf-stat__value">{{ stats.reviews }}</span>
+    </div>
+</div>
+
+<div class="rf-dash-grid">
+    {% if pending_movies %}
+    <section class="rf-panel" aria-labelledby="pending-title">
+        <div class="rf-panel__head">
+            <h2 id="pending-title">Waiting for approval</h2>
+            <a href="/admin/movies/" class="btn btn-link btn-sm px-0">All movies</a>
+        </div>
+        <ul class="rf-pending-list">
+            {% for m in pending_movies %}
+            <li>
+                <div class="rf-cell-movie">
+                    {% if m.movie_poster %}<img src="/static/uploads/poster/{{ m.movie_poster }}" alt="">{% else %}<span class="rf-thumb-ph"><i class="fa-solid fa-film" aria-hidden="true"></i></span>{% endif %}
+                    <div>
+                        <strong>{{ m.movie_title }}</strong>
+                        <span>{% if m.added_by_member %}Added by @{{ m.added_by_member.member_username }}{% else %}Added by an admin{% endif %}</span>
+                    </div>
                 </div>
+                <a href="/admin/movie/update/{{ m.movie_id }}/" class="btn btn-quiet btn-sm">Review</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="rf-panel" id="members" aria-labelledby="members-title">
+        <div class="rf-panel__head">
+            <h2 id="members-title">Members</h2>
+            <span class="rf-muted rf-small">{{ stats.members }} total, newest first</span>
+        </div>
+        {% if user %}
+        <div class="rf-table-wrap">
+            <table class="table rf-table rf-table--stack">
+                <thead>
+                    <tr>
+                        <th scope="col">Member</th>
+                        <th scope="col">Email</th>
+                        <th scope="col" class="text-end">Movies added</th>
+                        <th scope="col" class="text-end">Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in user %}
+                    <tr>
+                        <td class="rf-td-main">
+                            <div class="rf-cell-movie">
+                                {% if u.member_profile_pic %}
+                                    <img class="rf-avatar" style="--size: 2.25rem; aspect-ratio: 1; width: 2.25rem;" src="/static/uploads/profile_pic/{{ u.member_profile_pic }}" alt="">
+                                {% else %}
+                                    <span class="rf-avatar" style="--size: 2.25rem;" aria-hidden="true">{{ u.member_username[:1] }}</span>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ u.member_firstname }} {{ u.member_lastname }}</strong>
+                                    <span>@{{ u.member_username }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Email" class="text-break">{{ u.member_email }}</td>
+                        <td data-label="Movies added" class="text-end">{{ u.movies|count }}</td>
+                        <td data-label="Joined" class="text-end text-nowrap">{{ u.member_join_date.strftime('%d %b %Y') if u.member_join_date else '' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="rf-panel__body rf-muted">No one has signed up yet.</div>
+        {% endif %}
+    </section>
+</div>
 {% endblock %}

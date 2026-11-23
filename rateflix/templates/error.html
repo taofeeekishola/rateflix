@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} | RateFlix{% endblock %}
+{% block content %}
+<div class="rf-wrap rf-section">
+    <div class="rf-empty" style="max-width: 560px; margin-inline: auto;">
+        <i class="fa-solid fa-film" aria-hidden="true"></i>
+        <h1 class="h3" style="font-family: 'Jost', sans-serif; font-size: 1.375rem; font-weight: 600;">{{ title }}</h1>
+        <p>{{ message }}</p>
+        {% if detail %}<p class="rf-small mt-2">Reason: {{ detail }}</p>{% endif %}
+        <a class="btn btn-primary" href="{{ url_for('home') }}">Go to movies</a>
+    </div>
+</div>
+{% endblock %}

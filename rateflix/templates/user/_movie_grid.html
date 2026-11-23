@@ -1,0 +1,15 @@
+{% import '_macros.html' as ui %}
+{% for movie in movies %}
+  {{ ui.movie_card(movie, scores.get(movie.movie_id)) }}
+{% else %}
+  <div class="rf-empty">
+    <i class="fa-solid fa-film" aria-hidden="true"></i>
+    {% if filtered %}
+      <h3>No movies match these filters</h3>
+      <p>Try another year, genre or studio, or clear the filters to see every movie.</p>
+    {% else %}
+      <h3>No movies yet</h3>
+      <p>Movies appear here once an admin approves them.</p>
+    {% endif %}
+  </div>
+{% endfor %}

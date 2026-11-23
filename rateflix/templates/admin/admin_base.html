@@ -1,103 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
+{% import '_macros.html' as ui %}<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/ico" href="/static/images/favicon-32x32.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ ui.theme_head() }}
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23A61C3C'/%3E%3Cpath d='M16 6.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L16 21.1l-5.9 3.2 1.3-6.5-4.9-4.5 6.6-.8z' fill='%23fff'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="/static/fa/css/all.css">
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.css">
-    <link rel="stylesheet" href="/static/style.css">
-    <title>Admin RateFlix</title>
+    <link rel="stylesheet" href="/static/rateflix.css">
+    <title>{% block admintitle %}Admin{% endblock %} | RateFlix admin</title>
 </head>
 <body>
-    <div class="container">
-         <div class="container-fluid">
-             <!--Navbar-->
-            <div class="row">
-                <div class="col-md-12 p-0">
-                    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-                        <div class="container-fluid">
-                            <a class="navbar-brand text-primary" href="#">RateFlix</a>
-                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                                <span class="navbar-toggler-icon"></span>
-                            </button>
-                            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                                    <li class="nav-item">
-                                    <a class="nav-link active" aria-current="page" href="#">Movies</a>
-                                    </li>
-                                    <li class="nav-item">
-                                    <a class="nav-link" href="#">TV Shows</a>
-                                    </li>
-                                    <li class="nav-item">
-                                    <a class="nav-link" href="#">Awards & Events</a>
-                                    </li>
-                                </ul>
-                                
-                                <div class="d-flex">
-                                    {% if session.get('admin_id') != None %}
-                                    <div class="btn-group me-2">
-                                        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                            {{ admin_session.admin_username  }}
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <a href="/admin/logout/"><li><button class="dropdown-item" type="button">Logout</button></li></a>
-                                        </ul>
-                                    </div>
-                                    {% endif %}
-                                    
+    <a class="visually-hidden-focusable" href="#admin-main">Skip to content</a>
 
-                                </div>
-                            </div>
-                        </div>
-                    </nav>
+    {% set p = request.path %}
+    {% if p == '/admin/' %}{% set section = 'dashboard' %}
+    {% elif p.startswith(('/admin/movie', '/admin/addmovie', '/admin/addgenre', '/admin/addactor', '/admin/delgenre', '/admin/delactor')) %}{% set section = 'movies' %}
+    {% elif p.startswith(('/admin/actors', '/confirm/delete/actor')) %}{% set section = 'actors' %}
+    {% elif p.startswith(('/admin/producers', '/admin/delete/producer')) %}{% set section = 'producers' %}
+    {% elif p.startswith(('/admin/studio', '/admin/update/studio', '/admin/delete/studio')) %}{% set section = 'studios' %}
+    {% elif p.startswith(('/admin/genre', '/admin/delete/genre')) %}{% set section = 'genres' %}
+    {% else %}{% set section = '' %}{% endif %}
+
+    <div class="rf-admin">
+        <aside class="rf-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="rfSidebar" aria-labelledby="rfSidebarLabel">
+            <div class="offcanvas-header">
+                <a class="rf-brand" id="rfSidebarLabel" href="/admin/"><span class="rf-mark" aria-hidden="true"><i class="fa-solid fa-star"></i></span>RateFlix</a>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#rfSidebar" aria-label="Close menu"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="rf-sidebar__brand d-none d-lg-block">
+                    <a class="rf-brand" href="/admin/"><span class="rf-mark" aria-hidden="true"><i class="fa-solid fa-star"></i></span>RateFlix</a>
+                    <small>Admin</small>
+                </div>
+                <nav class="rf-side-nav" aria-label="Admin">
+                    {% for key, href, icon, name in [
+                        ('dashboard', '/admin/', 'fa-gauge-high', 'Dashboard'),
+                        ('movies', '/admin/movies/', 'fa-film', 'Movies'),
+                        ('actors', '/admin/actors/', 'fa-masks-theater', 'Actors'),
+                        ('producers', '/admin/producers/', 'fa-user-tie', 'Producers'),
+                        ('studios', '/admin/studios/', 'fa-building', 'Studios'),
+                        ('genres', '/admin/genres/', 'fa-tags', 'Genres')] %}
+                    <a class="rf-side-link{% if section == key %} active{% endif %}" href="{{ href }}"{% if section == key %} aria-current="page"{% endif %}>
+                        <i class="fa-solid {{ icon }}" aria-hidden="true"></i>{{ name }}
+                    </a>
+                    {% endfor %}
+                </nav>
+                <div class="rf-side-foot">
+                    <a class="rf-side-link" href="/"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>View the site</a>
+                    <a class="rf-side-link" href="/admin/logout/"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>Log out</a>
                 </div>
             </div>
+        </aside>
 
-            <div class="row">
-                <!-- The sidebar -->
-                <div class="col-md-3 col-lg-2 bg-light sidebar">
-                    <div class="d-flex flex-column align-items-start p-3">
-                        <h4 class="text-center mb-4">Admin Dashboard</h4>
-                        <div class="nav flex-column">
-                            <!-- <a class="nav-link active" href="#">
-                                <i class="fa-solid fa-home"></i> Dashboard
-                            </a> -->
-                            <a class="nav-link" href="/admin/">
-                                <i class="fa-solid fa-users"></i> Members
-                            </a>
-                            <a class="nav-link" href="/admin/producers/">
-                                <i class="fa-solid fa-building"></i> Producers
-                            </a>
-                            <a class="nav-link" href="/admin/movies/">
-                                <i class="fa-solid fa-film"></i> Movies
-                            </a>
-                            <a class="nav-link" href="/admin/genres/">
-                                <i class="fa-solid fa-tags"></i> Genres
-                            </a>
-                            <a class="nav-link" href="/admin/studios/">
-                                <i class="fa-solid fa-clapperboard"></i> Studio
-                            </a>
-                            <a class="nav-link" href="/admin/actors/">
-                                <i class="fa-solid fa-theater-masks"></i> Actors
-                            </a>
-                        </div>
-                    </div>
+        <div class="rf-admin-main">
+            <header class="rf-topbar">
+                <button type="button" class="btn btn-quiet btn-icon d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#rfSidebar" aria-controls="rfSidebar" aria-label="Open menu">
+                    <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                </button>
+                <a class="rf-brand d-lg-none" style="font-size: 1.4rem;" href="/admin/">RateFlix</a>
+                <div class="rf-topbar__spacer"></div>
+                {{ ui.theme_toggle() }}
+                {% if admin_session %}
+                <div class="dropdown">
+                    <button class="rf-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="rf-avatar" style="--size: 1.85rem;" aria-hidden="true">{{ admin_session.admin_username[:1] }}</span>
+                        <span class="d-none d-sm-inline">{{ admin_session.admin_username }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-header">{{ admin_session.admin_email }}</span></li>
+                        <li><a class="dropdown-item" href="/"><i class="fa-solid fa-film" aria-hidden="true"></i>View the site</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/admin/logout/"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>Log out</a></li>
+                    </ul>
                 </div>
+                {% endif %}
+            </header>
 
-                {% block admincontent %}
-
-                {% endblock %}
-            </div>
+            <main class="rf-admin-content" id="admin-main">
+                {% if get_flashed_messages() %}<div class="mb-4">{{ ui.notices() }}</div>{% endif %}
+                {% block admincontent %}{% endblock %}
+            </main>
         </div>
     </div>
-       
-        
-    <script src="/static/jquery.js"></script>
-    <script src="/static/scripts.js"></script>
-    <script src="/static/bootstrap/js/bootstrap.bundle.js" type="text/javascript"></script>
-     {% block adminscript %}
 
-     {% endblock %}
+    <script src="/static/jquery.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.bundle.js"></script>
+    <script src="/static/theme.js"></script>
+    {% block adminscript %}{% endblock %}
 </body>
 </html>

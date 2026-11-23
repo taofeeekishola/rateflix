@@ -1,0 +1,25 @@
+{# One-field forms (producer, genre, studio), shared by their add and edit pages #}
+{% import '_macros.html' as ui %}
+
+{% macro name_form(form, back_href, back_label, title, intro, label, button, value=None) %}
+<a class="rf-back" href="{{ back_href }}"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>{{ back_label }}</a>
+<div class="rf-admin-head">
+    <div>
+        <h1>{{ title }}</h1>
+        {% if intro %}<p>{{ intro }}</p>{% endif %}
+    </div>
+</div>
+
+<form class="rf-panel rf-panel__body" method="post" novalidate style="max-width: 560px;">
+    {{ form.csrf_token }}
+    {% if value is not none %}
+        {{ ui.field(form.name, label=label, value=form.name.data or value, autofocus=True, autocomplete='off') }}
+    {% else %}
+        {{ ui.field(form.name, label=label, autofocus=True, autocomplete='off') }}
+    {% endif %}
+    <div class="rf-form-actions">
+        <button class="btn btn-primary" type="submit">{{ button }}</button>
+        <a class="btn btn-quiet" href="{{ back_href }}">Cancel</a>
+    </div>
+</form>
+{% endmacro %}

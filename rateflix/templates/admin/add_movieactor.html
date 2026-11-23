@@ -1,25 +1,32 @@
 {% extends 'admin/admin_base.html' %}
+{% block admintitle %}Add an actor to {{ movie.movie_title }}{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Add Actor to {{ movie.movie_title }}</h1>
-                
-                    <form method="post" action="/admin/addactor/{{ movie.movie_id }}/" novalidate>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% set cast_ids = movie.movie_actors|map(attribute='actor_id')|list %}
+<a class="rf-back" href="/admin/movie/actors/{{ movie.movie_id }}/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Cast of {{ movie.movie_title }}</a>
+<div class="rf-admin-head">
+    <div>
+        <h1>Add an actor</h1>
+        <p>Add someone to the cast of {{ movie.movie_title }}. Not in the list? <a href="/admin/actors/add/">Add a new actor</a> first.</p>
+    </div>
+</div>
 
-
-                        <label for="actor">Actor</label>
-                        <select name="actor" id="actor" class="form-select mb-3">
-                            <!--this displays the actors that are not in the movie-->
-                            {% for actor in all_actors %}
-                                {% if actor.actor_id not in movie.movie_actors|map(attribute='actor.actor_id') %}
-                                    <option value="{{ actor.actor_id }}">{{ actor.actor_name }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-
-                        <button class="btn btn-primary" >Add Actor</button>
-                    </form>
-                </div>
+<form class="rf-panel rf-panel__body" method="post" style="max-width: 560px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% set available = all_actors|rejectattr('actor_id', 'in', cast_ids)|list %}
+    {% if available %}
+        <div class="rf-field">
+            <label class="rf-label" for="actor">Actor</label>
+            <select class="form-select" name="actor" id="actor">
+                {% for a in available %}<option value="{{ a.actor_id }}">{{ a.actor_name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="rf-form-actions">
+            <button class="btn btn-primary" type="submit">Add to cast</button>
+            <a class="btn btn-quiet" href="/admin/movie/actors/{{ movie.movie_id }}/">Cancel</a>
+        </div>
+    {% else %}
+        <p class="rf-muted mb-3">Every actor is already in this cast.</p>
+        <a class="btn btn-quiet" href="/admin/actors/add/">Add a new actor</a>
+    {% endif %}
+</form>
 {% endblock %}
-

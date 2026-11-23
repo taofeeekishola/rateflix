@@ -1,40 +1,27 @@
 {% extends 'admin/admin_base.html' %}
+{% block admintitle %}Genres for {{ movie.movie_title }}{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">{{  movie.movie_title }} Genre </h1>
-                    {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                            {% for message in messages %}
-                                <p class="alert alert-success"> {{ message }} </p>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                    <a href="/admin/addgenre/{{ movie.movie_id}}/" class="btn btn-primary text-end" >Add Genre</a>
-                    <table class="table">
-                            <thead>
-                                <tr>
-                                    <td>S/N</td>
-                                    <td>Name</td>
-                                    <td>Activity</td>
-                                </tr>
-                            </thead>
+<a class="rf-back" href="/admin/movie/update/{{ movie.movie_id }}/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>{{ movie.movie_title }}</a>
+<div class="rf-admin-head">
+    <div>
+        <h1>Genres for {{ movie.movie_title }}</h1>
+        <p>{{ genres|length }} {{ 'genre' if genres|length == 1 else 'genres' }}. These decide which filters the movie shows up under.</p>
+    </div>
+    <a href="/admin/addgenre/{{ movie.movie_id }}/" class="btn btn-primary"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Add genres</a>
+</div>
 
-                            <tbody>
-                               {% if genres %}
-                                    {% for movie_genre in genres %}
-                                        <tr>
-                                            <td> {{ loop.index }} </td>
-                                            <td>{{ movie_genre.genre.genre_name }}</td>
-                                            <td> <a href="/admin/delgenre/{{ movie.movie_id }}/{{ movie_genre.genre_id }}" class="btn btn-danger" >Delete</a> </td>
-                                        </tr>
-                                    {% endfor %}
-                                {% else %}
-                                        <tr>
-                                            <td colspan="3" class="alert alert-danger" >No Genre</td>
-                                        </tr>
-                                {% endif %}
-                            </tbody>
-                    </table>
-                </div>
+<div class="rf-panel" style="max-width: 640px;">
+    {% if genres %}
+    <ul class="rf-pending-list">
+        {% for g in genres %}
+        <li>
+            <span class="fw-semibold">{{ g.genre.genre_name }}</span>
+            <a href="/admin/delgenre/{{ movie.movie_id }}/{{ g.genre_id }}" class="btn btn-quiet btn-sm text-danger"><i class="fa-solid fa-xmark me-1" aria-hidden="true"></i>Remove</a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="rf-panel__body rf-muted">This movie has no genres yet, so it won't appear under any genre filter.</div>
+    {% endif %}
+</div>
 {% endblock %}

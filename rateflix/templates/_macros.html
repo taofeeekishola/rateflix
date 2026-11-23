@@ -1,0 +1,104 @@
+{# Shared building blocks for the RateFlix templates. Import with:
+   {% import '_macros.html' as ui %} #}
+
+{# Applies the saved theme before the page paints, so there is no flash of the wrong theme.
+   Light is the default. #}
+{% macro theme_head() %}
+<script>
+  (function () {
+    var t = 'light';
+    try { t = localStorage.getItem('rf-theme') || 'light'; } catch (e) {}
+    document.documentElement.setAttribute('data-bs-theme', t === 'dark' ? 'dark' : 'light');
+  })();
+</script>
+{% endmacro %}
+
+{% macro theme_toggle(extra_class='') %}
+<button type="button" class="btn btn-quiet btn-icon rf-theme-toggle {{ extra_class }}" data-rf-theme-toggle aria-label="Switch theme">
+  <i class="fa-solid fa-moon" aria-hidden="true"></i>
+  <i class="fa-solid fa-sun" aria-hidden="true"></i>
+</button>
+{% endmacro %}
+
+{# flash() messages #}
+{% macro notices() %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+  <div class="rf-notices" role="status">
+    {% for message in messages %}
+    <div class="rf-notice">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      <p>{{ message }}</p>
+      <button type="button" class="btn-close" aria-label="Dismiss" onclick="this.parentElement.remove()"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+{% endmacro %}
+
+{# A labelled form field with its hint and errors #}
+{% macro field(f, label=None, required=False, hint=None, cls='form-control', wrap='') %}
+<div class="rf-field {{ wrap }}{% if f.errors %} is-invalid{% endif %}">
+  <label class="rf-label" for="{{ f.id }}">{{ label or f.label.text }}{% if required %}<span class="rf-req" aria-hidden="true">*</span>{% endif %}</label>
+  {{ f(class_=cls, **kwargs) }}
+  {% if hint %}<p class="rf-hint">{{ hint }}</p>{% endif %}
+  {% for error in f.errors %}<p class="rf-error">{{ error }}</p>{% endfor %}
+</div>
+{% endmacro %}
+
+{# Errors for a field rendered by hand (e.g. a <select> built in the template) #}
+{% macro errors(f) %}
+{% for error in f.errors %}<p class="rf-error">{{ error }}</p>{% endfor %}
+{% endmacro %}
+
+{% macro stars(score, id=None) %}
+<span class="rf-stars"{% if id %} id="{{ id }}"{% endif %} style="--rf-score: {{ score or 0 }}" role="img" aria-label="{{ '%.1f'|format(score or 0) }} out of 5 stars"><span class="rf-stars__fill"></span></span>
+{% endmacro %}
+
+{# initials avatar, or the uploaded picture #}
+{% macro avatar(member, size=None) %}
+{% if member and member.member_profile_pic %}
+  <img class="rf-avatar" src="/static/uploads/profile_pic/{{ member.member_profile_pic }}" alt=""{% if size %} style="--size: {{ size }}"{% endif %}>
+{% else %}
+  <span class="rf-avatar" aria-hidden="true"{% if size %} style="--size: {{ size }}"{% endif %}>{{ (member.member_username or member.member_firstname or '?')[:1] if member else '?' }}</span>
+{% endif %}
+{% endmacro %}
+
+{# A poster card. score is (average, count) or None #}
+{% macro movie_card(movie, score=None) %}
+<article class="rf-card">
+  <a class="rf-card__link" href="/movie/info/{{ movie.movie_id }}">
+    <div class="rf-poster">
+      {% if movie.movie_poster %}
+        <img src="/static/uploads/poster/{{ movie.movie_poster }}" alt="" loading="lazy">
+      {% else %}
+        <div class="rf-poster-ph"><i class="fa-solid fa-film" aria-hidden="true"></i>{{ movie.movie_title }}</div>
+      {% endif %}
+    </div>
+    <h3 class="rf-card__title">{{ movie.movie_title }}</h3>
+  </a>
+  <p class="rf-card__meta">
+    <span>{{ movie.movie_release_date.year if movie.movie_release_date else '' }}</span>
+    {% if score and score[1] %}
+      <span class="rf-card__score" title="{{ score[1] }} {{ 'rating' if score[1] == 1 else 'ratings' }}"><i class="fa-solid fa-star" aria-hidden="true"></i>{{ '%.1f'|format(score[0]) }}<span class="visually-hidden"> out of 5</span></span>
+    {% else %}
+      <span class="rf-card__score is-empty">Not rated yet</span>
+    {% endif %}
+  </p>
+</article>
+{% endmacro %}
+
+{# Genre checkboxes shown as toggle chips. selected: list of genre ids already chosen #}
+{% macro genre_chips(genres, selected=[], hide=[]) %}
+<div class="rf-chips">
+  {% for g in genres %}
+    {% if g.genre_id not in hide %}
+    <div class="rf-chip-toggle">
+      <input type="checkbox" name="genre" value="{{ g.genre_id }}" id="genre-{{ g.genre_id }}"{% if g.genre_id in selected %} checked{% endif %}>
+      <label for="genre-{{ g.genre_id }}">{{ g.genre_name }}</label>
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endmacro %}

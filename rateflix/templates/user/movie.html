@@ -1,345 +1,362 @@
 {% extends 'base.html' %}
+{% import '_macros.html' as ui %}
+{% block title %}{{ movies.movie_title }} | RateFlix{% endblock %}
+
 {% block content %}
-        <!--Movie name-->
-       <div class="row mt-4">
-            <!-- Movie Details -->
-           <div class="col-md-6">
-              <h1 class="h3 sub-heading"> {{ movies.movie_title }} </h1>
-              <div class="d-flex mb-2">
-                  <p class="mb-1 me-3"><strong>Year:</strong> {{ movies.movie_release_date.strftime('%Y') }}</p>
-              </div>
-          </div>
-          <!-- Ratings and Popularity -->
-          <div class="col-md-6">
-              <div class="d-flex flex-row justify-content-between">
-                
-                  <p class="mb-1"><strong>RateFlix Rating:</strong> <span id="average_rating">{{ "%.1f"|format(average_rating) }}</span>/5
-                      <small class="text-muted">(<span id="rating_count">{{ rating_count }} {{ 'rating' if rating_count == 1 else 'ratings' }}</span>)</small></p>
-                  {% if session.get('member_id') != None %}
-                  <p class="mb-1"><strong>Your Rating:</strong>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_1" data-rating="1" ></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_2" data-rating="2"></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_3" data-rating="3"></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_4" data-rating="4"></i>
-                      <i class="fa-solid fa-star submit-star myrate" id="submit_star_5" data-rating="5"></i>
-                      <span id="my_rating_text">{% if my_rating %}{{ my_rating }}/5{% endif %}</span>
-                  </p>
-                  <button class="btn btn-outline-primary btn-sm" id="submit_rating">{{ 'Update' if my_rating else 'Submit' }}</button>
-                  {% else %}
-                   <p class="mb-1"><strong>Your Rating:</strong> <a href="/user/login/">Log in</a> to rate</p>
-                  {% endif %}
-              </div>
-              <small id="rating_msg" class="d-block text-end"></small>
-          </div>
+{% macro nice_date(d) %}{{ d.day }} {{ d.strftime('%b %Y') }}{% endmacro %}
+{% set signed_in = session.get('member_id') != None %}
+
+<section class="rf-stage" aria-labelledby="movie-title">
+    {% if movies.movie_poster %}
+    <div class="rf-stage__backdrop" style="--stage-img: url('/static/uploads/poster/{{ movies.movie_poster }}')" aria-hidden="true"></div>
+    {% endif %}
+    <div class="rf-wrap rf-stage__inner">
+        <div class="rf-stage__poster">
+            {% if movies.movie_poster %}
+                <img src="/static/uploads/poster/{{ movies.movie_poster }}" alt="Poster for {{ movies.movie_title }}">
+            {% else %}
+                <div class="rf-poster-ph"><i class="fa-solid fa-film" aria-hidden="true"></i>{{ movies.movie_title }}</div>
+            {% endif %}
         </div>
 
-        <!--Movie Poster & trailer-->
-        <div class="row">
-            <div class="col-md-3 d-flex align-items-stretch">
-              {% if movies.movie_poster == "" or movies.movie_poster == None %}
-                <img src="/static/Images/quietplace.jpg" alt="A Quiet Place" class="img-fluid w-100 h-100" style="object-fit: cover;">
-              {% else %}
-                <img src="/static/uploads/poster/{{ movies.movie_poster }}" alt="{{ movies.movie_title }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
-              {% endif %}
-            </div>
-            <div class="col-md-9 d-flex align-items-stretch">
-              {% if movies.movie_trailer == "" or movies.movie_trailer == None %}
-                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white-50" style="min-height: 300px;">
-                    Trailer not available
-                </div>
-                {% else %}
-                 <video controls preload="metadata" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                    <source src="/static/uploads/trailers/{{movies.movie_trailer}}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                {% endif %}
-            </div>
-            <div class="row mt-2">
-                <div class="col-sm-6">
-                  {% if genres %}
-                    {% for movie_genre in genres %}
-                      <button class="btn btn-outline-primary btn-sm rounded-pill">{{ movie_genre.genre.genre_name }}</button>
-                    {% endfor %}
-                  {% else %}
-                    <button class="btn btn-outline-primary btn-sm rounded-pill">No Genre</button>
-                  {% endif %}
-                </div>
+        <div class="rf-stage__head">
+            <h1 class="rf-stage__title" id="movie-title">{{ movies.movie_title }}</h1>
+            <div class="rf-meta">
+                {% if movies.movie_release_date %}<span>{{ movies.movie_release_date.year }}</span>{% endif %}
+                {% for movie_genre in genres %}
+                    <a class="rf-chip" href="/?genre={{ movie_genre.genre_id }}#browse">{{ movie_genre.genre.genre_name }}</a>
+                {% endfor %}
             </div>
         </div>
 
-        <!--Movie info-->
-        <div class="row mt-2">
-            <div class="col-md-8">
-                <p>{{ movies.movie_description }}</p>
-                <hr>
-                <p><strong>Director</strong> {{ movies.producer.producer_name }}</p>
-                <hr>
-                <p><strong>Studio</strong> {{ movies.studio.studio_name }}</p>
+        <div class="rf-stage__body">
+            <div class="rf-score">
+                <span class="rf-score__num"><span id="average_rating">{{ "%.1f"|format(average_rating) }}</span><small>/5</small></span>
+                {{ ui.stars(average_rating, 'average_stars') }}
+                <span class="rf-score__count">RateFlix rating from <span id="rating_count">{{ rating_count }} {{ 'rating' if rating_count == 1 else 'ratings' }}</span></span>
             </div>
 
-            {#<div class="col-md-4">
-                <h4>Where to Watch</h4>
-                <p>Still in theaters <i class="fa-solid fa-film"></i></p>
-            </div>#}
-        </div>
-
-           <!--Cast heading-->
-          <div class="row">
-            <div class="col-md-6 mt-5">
-                <h3 class="sub-heading">Cast</h3>
-            </div>
-        </div>
-
-        <!--Cast-->
-        <div class="row cast mb-4">
-          {% if actors %}
-            {% for movie_actor  in actors %}
-            <div class="col-md-3">
-              {% if movie_actor.actor.actor_photo == "" or movie_actor.actor.actor_photo == None %}
-                <img src="/static/Images/default.jfif" alt="{{ movie_actor.actor.actor_name }}" class="img-fluid">
-              {% else %}
-                <img src="/static/uploads/actors/{{ movie_actor.actor.actor_photo }}" alt="{{ movie_actor.actor.actor_name }}" class="img-fluid">
-               {% endif %}
-                <P>{{ movie_actor.actor.actor_name }}</P>
-            </div>
-            {% endfor %}
-          {% endif %}
-        </div>
- 
-        <!--More like this heading-->
-          <div class="row mt-5">
-            <div class="col-md-6 mt-5">
-                <h3 class="sub-heading">More like this</h3>
-            </div>
-        </div>
-
-        <!--More like this-->
-        <div class="row">
-          {% if moviess %}
-          {% for movie in moviess %}
-            <div class="col-6 col-md-4 col-lg-2 mb-4">
-              <div class="card card-custom">
-                {% if movie.movie_poster == "" or movie.movie_poster == None %}
-                  <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top " alt="Movie Poster"></a>
-                {% else %}
-                  <a href="/movie/info/{{ movie.movie_id }}"><img src="/static/uploads/poster/{{ movie.movie_poster }}" class="card-img-top poster" alt="{{ movie.movie_poster }}"></a>
-                {% endif %}
-                <div class="card-body">
-                  <a href="/movie/info/{{ movie.movie_id }}"><p class="card-title mb-2 fs-6">{{ movie.movie_title }}</p></a>
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                  
-                  </div>
-                  <!-- Align the buttons side by side with equal width and reduced height -->
-                  <div class="d-flex justify-content-center align-items-center">
-                    <a href="/movie/info/{{ movie.movie_id }}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-         {% endfor %}
-         {% else %}
-          <div class="col-6 col-md-4 col-lg-2 mb-4">
-            <h3 class="alert alert-primary"  >No Movies Added</h3>
-          </div>
-        {% endif %}
-        </div>
-
-        <!--Write your own review heading-->
-         <div class="row">
-            <div class="col-md-6 mt-5">
-                <h3 class="sub-heading">My Review & Rating</h3>
-            </div>
-        </div>
-
-         <!--Write your own review-->
-         <div class="row">
-            <div class="col-md-9">
-              <form  method="post" >
-                {% if session.get('member_id') != None %}
-                  {{ review.csrf_token }}
-                  <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
-                  {{ review.review(class='form-control mb-2', placeholder='My Review' )}}
-                  {{ review.submit_review(class='btn btn-primary') }}
-                  <small id="review_msg" class="text-danger ms-2"></small>
-                {% else %}
-                    <p class="mb-2"><a href="/user/login/">Log in</a> or <a href="/user/signup/">sign up</a> to write a review.</p>
-                    {{ review.csrf_token }}
-                    <input type="hidden" value="{{ movies.movie_id }}" id="movie"/>
-                    {{ review.review(class='form-control mb-2', placeholder='My Review', disabled=True )}}
-                    {{ review.submit_review(class='btn btn-primary', disabled=True) }}
-                {% endif %}
-                
-              </form>
-            </div>
-         </div>
-
-         
-         <!--all the comments-->
-         <div class="row mt-5">
-            <div class="col-md-12">
-                <div id="reviews-section">
-                    <div id="show"></div>
-                    {% if all_reviews %}
-                        {% for reviews in all_reviews %}
-                            <div class="card mb-3" style="max-width: 500px;">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ reviews.member.member_username }}</h5>
-                                    <p class="card-text">{{ reviews.review_content }}</p>
-                                    <footer class="blockquote-footer">
-                                        {{ reviews.review_date.strftime('%Y-%m-%d') }}
-                                    </footer>
-                                    {% if session.get('admin_id') != None or (session.get('member_id') != None and session.get('member_id') == reviews.member_id) %}
-                                    <button type="button" class="btn btn-link btn-sm text-danger p-0 delete-review" data-review-id="{{ reviews.review_id }}">Delete</button>
-                                    {% endif %}
-                                </div>
-                            </div>
+            {% if signed_in %}
+            <div class="rf-rate">
+                <p class="rf-rate__label" id="rate-label">Your rating</p>
+                <div class="rf-rate__row">
+                    <div class="rf-rate__stars" role="group" aria-labelledby="rate-label">
+                        {% for n in range(1, 6) %}
+                        <button type="button" class="submit-star{% if (my_rating or 0) >= n %} is-on{% endif %}" id="submit_star_{{ n }}" data-rating="{{ n }}" aria-label="{{ n }} {{ 'star' if n == 1 else 'stars' }}">
+                            <i class="fa-solid fa-star" aria-hidden="true"></i>
+                        </button>
                         {% endfor %}
+                    </div>
+                    <span id="my_rating_text">{% if my_rating %}{{ my_rating }}/5{% endif %}</span>
+                    <button type="button" class="btn btn-primary btn-sm" id="submit_rating">{{ 'Update rating' if my_rating else 'Save rating' }}</button>
+                </div>
+                <small id="rating_msg" role="status"></small>
+            </div>
+            {% else %}
+            <div class="rf-rate">
+                <p class="rf-rate__label mb-0"><a href="/user/login/">Log in</a> or <a href="/user/signup/">sign up</a> to rate this movie.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<div class="rf-wrap rf-section">
+    <div class="rf-movie-layout">
+        <div class="rf-movie-main">
+            {% if movies.movie_trailer %}
+            <section id="trailer" class="mb-5" aria-labelledby="trailer-title">
+                <h2 id="trailer-title" class="mb-3">Trailer</h2>
+                <div class="rf-trailer">
+                    <video controls preload="metadata"{% if movies.movie_poster %} poster="/static/uploads/poster/{{ movies.movie_poster }}"{% endif %}>
+                        <source src="/static/uploads/trailers/{{ movies.movie_trailer }}" type="video/mp4">
+                        Your browser can't play this trailer.
+                    </video>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="mb-5" aria-labelledby="about-title">
+                <h2 id="about-title" class="mb-3">About the movie</h2>
+                {% if movies.movie_description %}
+                    <p class="fs-5 lh-base">{{ movies.movie_description }}</p>
+                {% else %}
+                    <p class="rf-muted">No plot summary yet.</p>
+                {% endif %}
+            </section>
+
+            <section class="mb-5" aria-labelledby="cast-title">
+                <h2 id="cast-title" class="mb-3">Cast</h2>
+                {% if actors %}
+                <div class="rf-cast">
+                    {% for movie_actor in actors %}
+                    <div class="rf-cast__item">
+                        {% if movie_actor.actor.actor_photo and movie_actor.actor.actor_photo != 'default_actor.jpg' %}
+                            <img src="/static/uploads/actors/{{ movie_actor.actor.actor_photo }}" alt="" loading="lazy">
+                        {% else %}
+                            <span class="rf-avatar" aria-hidden="true">{{ movie_actor.actor.actor_name[:1] }}</span>
+                        {% endif %}
+                        <p>{{ movie_actor.actor.actor_name }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p class="rf-muted">No cast listed yet.</p>
+                {% endif %}
+            </section>
+
+            <section id="reviews" aria-labelledby="reviews-title">
+                <h2 id="reviews-title" class="mb-3">Reviews</h2>
+
+                <form class="rf-review-form" method="post">
+                    {{ review.csrf_token }}
+                    <input type="hidden" value="{{ movies.movie_id }}" id="movie">
+                    {% if signed_in %}
+                        <label class="rf-label mb-0" for="review">Write a review</label>
+                        {{ review.review(class='form-control', placeholder='What did you think of it?', rows=4) }}
+                        <div class="rf-review-form__foot">
+                            {{ review.submit_review(class='btn btn-primary', value='Post review') }}
+                            <small id="review_msg" class="text-danger" role="status"></small>
+                        </div>
+                    {% else %}
+                        <div class="rf-signin-prompt">
+                            <p>Log in to write a review.</p>
+                            <div class="rf-actions">
+                                <a class="btn btn-primary" href="/user/login/">Log in</a>
+                                <a class="btn btn-quiet" href="/user/signup/">Sign up</a>
+                            </div>
+                        </div>
                     {% endif %}
-                    <div class="alert alert-primary" role="alert" id="no_reviews" {% if all_reviews %}style="display: none;"{% endif %}>
-                        No Reviews Available
+                </form>
+
+                <div id="reviews-section" class="rf-reviews">
+                    <div id="show" class="rf-reviews mt-0"></div>
+                    {% for reviews in all_reviews %}
+                    <article class="rf-review">
+                        {{ ui.avatar(reviews.member, '2.5rem') }}
+                        <div>
+                            <div class="rf-review__head">
+                                <h3 class="rf-review__name">{{ reviews.member.member_username }}</h3>
+                                <time class="rf-review__date" datetime="{{ reviews.review_date.strftime('%Y-%m-%d') }}">{{ nice_date(reviews.review_date) }}</time>
+                                {% if session.get('admin_id') != None or (session.get('member_id') != None and session.get('member_id') == reviews.member_id) %}
+                                <button type="button" class="delete-review" data-review-id="{{ reviews.review_id }}">Delete</button>
+                                {% endif %}
+                            </div>
+                            <p class="rf-review__text">{{ reviews.review_content }}</p>
+                        </div>
+                    </article>
+                    {% endfor %}
+                    <div class="rf-empty" id="no_reviews"{% if all_reviews %} style="display: none;"{% endif %}>
+                        <i class="fa-regular fa-comment" aria-hidden="true"></i>
+                        <h3>No reviews yet</h3>
+                        <p>{{ 'Be the first to say what you thought of it.' if signed_in else 'Log in and be the first to review it.' }}</p>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
 
+        <aside class="rf-movie-aside" aria-label="Movie details">
+            <div class="rf-panel rf-panel__body">
+                <dl class="rf-facts">
+                    <div>
+                        <dt>Released</dt>
+                        <dd>{{ nice_date(movies.movie_release_date) if movies.movie_release_date else 'Not listed' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Producer</dt>
+                        <dd>{{ movies.producer.producer_name if movies.producer else 'Not listed' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Studio</dt>
+                        <dd>{{ movies.studio.studio_name if movies.studio else 'Not listed' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Genres</dt>
+                        <dd class="d-flex flex-wrap gap-1 mt-1">
+                            {% for movie_genre in genres %}
+                                <a class="rf-chip" href="/?genre={{ movie_genre.genre_id }}#browse">{{ movie_genre.genre.genre_name }}</a>
+                            {% else %}
+                                Not listed
+                            {% endfor %}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<section class="rf-wrap rf-section" aria-labelledby="similar-title">
+    <div class="rf-section__head">
+        <h2 id="similar-title">More like this</h2>
+    </div>
+    <div class="rf-grid rf-grid--row">
+        {% for movie in moviess %}
+            {{ ui.movie_card(movie, scores.get(movie.movie_id)) }}
+        {% else %}
+            <div class="rf-empty"><p>No other movies yet.</p></div>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
-         <script>
-            $(document).ready(function(){
-              var csrfToken = $('input[name="csrf_token"]').val();
-              var movieId = $('#movie').val();
+<script>
+    $(document).ready(function () {
+        var csrfToken = $('input[name="csrf_token"]').val();
+        var movieId = $('#movie').val();
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-              // the server's error message, or a general one (e.g. the page was open too long)
-              function errorText(xhr) {
-                  if (xhr.responseJSON && xhr.responseJSON.error) { return xhr.responseJSON.error; }
-                  return 'Something went wrong. Please refresh the page and try again.';
-              }
+        // the server's error message, or a general one (e.g. the page was open too long)
+        function errorText(xhr) {
+            if (xhr.responseJSON && xhr.responseJSON.error) { return xhr.responseJSON.error; }
+            return 'Something went wrong. Refresh the page and try again.';
+        }
 
-              // builds a review card; the review text is added as plain text, never as HTML
-              function reviewCard(r) {
-                  var $card = $('<div class="card mb-3" style="max-width: 500px;"></div>');
-                  var $body = $('<div class="card-body"></div>').appendTo($card);
-                  $('<h5 class="card-title"></h5>').text(r.member_username).appendTo($body);
-                  $('<p class="card-text"></p>').text(r.review_content).appendTo($body);
-                  $('<footer class="blockquote-footer"></footer>').text(r.review_date).appendTo($body);
-                  $('<button type="button" class="btn btn-link btn-sm text-danger p-0 delete-review">Delete</button>')
-                      .attr('data-review-id', r.review_id).appendTo($body);
-                  return $card;
-              }
+        // "2026-11-23" -> "23 Nov 2026"
+        function niceDate(iso) {
+            var p = String(iso).split('-');
+            return p.length === 3 ? parseInt(p[2], 10) + ' ' + months[parseInt(p[1], 10) - 1] + ' ' + p[0] : iso;
+        }
 
-              // post a review: clear the box and lock the button straight away so it can't be sent twice
-              $('#submit_review').click(function(event){
-                event.preventDefault();
-                var $btn = $(this);
-                var $box = $('#review');
-                var text = $.trim($box.val());
-                $('#review_msg').text('');
-                if (!text) {
-                    $('#review_msg').text('Please write something before posting.');
-                    return;
+        // builds a review card; the review text is added as plain text, never as HTML
+        function reviewCard(r) {
+            var $card = $('<article class="rf-review"></article>');
+            if (r.member_profile_pic) {
+                $('<img class="rf-avatar" alt="" style="--size: 2.5rem">').attr('src', '/static/uploads/profile_pic/' + r.member_profile_pic).appendTo($card);
+            } else {
+                $('<span class="rf-avatar" aria-hidden="true" style="--size: 2.5rem"></span>').text(String(r.member_username).charAt(0)).appendTo($card);
+            }
+            var $body = $('<div></div>').appendTo($card);
+            var $head = $('<div class="rf-review__head"></div>').appendTo($body);
+            $('<h3 class="rf-review__name"></h3>').text(r.member_username).appendTo($head);
+            $('<time class="rf-review__date"></time>').attr('datetime', r.review_date).text(niceDate(r.review_date)).appendTo($head);
+            $('<button type="button" class="delete-review">Delete</button>').attr('data-review-id', r.review_id).appendTo($head);
+            $('<p class="rf-review__text"></p>').text(r.review_content).appendTo($body);
+            return $card;
+        }
+
+        // post a review: clear the box and lock the button straight away so it can't be sent twice
+        $('#submit_review').click(function (event) {
+            event.preventDefault();
+            var $btn = $(this);
+            var $box = $('#review');
+            var text = $.trim($box.val());
+            $('#review_msg').text('');
+            if (!text) {
+                $('#review_msg').text('Write something before posting.');
+                return;
+            }
+
+            $btn.prop('disabled', true).val('Posting...');
+            $box.val('');
+
+            $.ajax({
+                url: '/ajax/movie/review/',
+                type: 'POST',
+                data: { reviewData: text, movieId: movieId, csrf_token: csrfToken },
+                success: function (resp) {
+                    if (!resp.duplicate) {
+                        $('#show').prepend(reviewCard(resp));
+                    }
+                    $('#no_reviews').hide();
+                },
+                error: function (xhr) {
+                    $box.val(text);   // put the text back so nothing is lost
+                    $('#review_msg').text(errorText(xhr));
+                },
+                complete: function () {
+                    $btn.prop('disabled', false).val('Post review');
                 }
-
-                $btn.prop('disabled', true).val('Posting...');
-                $box.val('');
-
-                $.ajax({
-                  url: '/ajax/movie/review/',
-                  type:'POST',
-                  data: {reviewData: text, movieId: movieId, csrf_token: csrfToken},
-                  success: function(resp){
-                      if (!resp.duplicate) {
-                          $('#show').prepend(reviewCard(resp));
-                      }
-                      $('#no_reviews').hide();
-                  },
-                  error: function(xhr){
-                      $box.val(text);   // put the text back so nothing is lost
-                      $('#review_msg').text(errorText(xhr));
-                  },
-                  complete: function(){
-                      $btn.prop('disabled', false).val('Submit');
-                  }
-                });
-              });
-
-              // delete a review (shown only to its author and to admins)
-              $('#reviews-section').on('click', '.delete-review', function(){
-                  if (!confirm('Delete this review?')) { return; }
-                  var $btn = $(this);
-                  var $card = $btn.closest('.card');
-                  $btn.prop('disabled', true).text('Deleting...');
-                  $.ajax({
-                      url: '/ajax/movie/review/' + $btn.data('review-id') + '/delete/',
-                      type: 'POST',
-                      data: {csrf_token: csrfToken},
-                      success: function(){
-                          $card.remove();
-                          if ($('#reviews-section .card').length === 0) { $('#no_reviews').show(); }
-                      },
-                      error: function(xhr){
-                          $btn.prop('disabled', false).text('Delete');
-                          alert(errorText(xhr));
-                      }
-                  });
-              });
-
-              // ratings: the stars show the person's saved rating until they pick another
-              var rating_data = {{ my_rating or 0 }};
-
-              function paintStars(upTo) {
-                  $('.submit-star').each(function() {
-                      $(this).css('color', $(this).data('rating') <= upTo ? 'gold' : '');
-                  });
-              }
-              paintStars(rating_data);
-
-              $('.submit-star').mouseenter(function() {
-                  paintStars($(this).data('rating'));
-              }).mouseleave(function() {
-                  paintStars(rating_data);
-              });
-
-              $('.submit-star').click(function() {
-                  rating_data = $(this).data('rating');
-                  paintStars(rating_data);
-                  $('#rating_msg').removeClass('text-danger text-success').text('');
-              });
-
-              function ratingMessage(text, isError) {
-                  $('#rating_msg').removeClass('text-danger text-success')
-                      .addClass(isError ? 'text-danger' : 'text-success').text(text);
-              }
-
-              $('#submit_rating').click(function() {
-                  if (rating_data === 0) {
-                      ratingMessage('Pick a number of stars first.', true);
-                      return;
-                  }
-                  var $btn = $(this);
-                  $btn.prop('disabled', true).text('Saving...');
-                  $.ajax({
-                      url: '/user/submitrating/',
-                      type: 'POST',
-                      data: { rating: rating_data, movieId: movieId, csrf_token: csrfToken },
-                      success: function(resp) {
-                          rating_data = resp.your_rating;
-                          paintStars(rating_data);
-                          $('#my_rating_text').text(resp.your_rating + '/5');
-                          $('#average_rating').text(Number(resp.average_rating).toFixed(1));
-                          $('#rating_count').text(resp.rating_count + (resp.rating_count === 1 ? ' rating' : ' ratings'));
-                          $btn.text('Update');
-                          ratingMessage('Rating saved', false);
-                      },
-                      error: function(xhr) {
-                          $btn.text($('#my_rating_text').text() ? 'Update' : 'Submit');
-                          ratingMessage(errorText(xhr), true);
-                      },
-                      complete: function() {
-                          $btn.prop('disabled', false);
-                      }
-                  });
-              });
             });
-         </script>
+        });
+
+        // delete a review (shown only to its author and to admins)
+        $('#reviews-section').on('click', '.delete-review', function () {
+            if (!confirm('Delete this review?')) { return; }
+            var $btn = $(this);
+            var $card = $btn.closest('.rf-review');
+            $btn.prop('disabled', true).text('Deleting...');
+            $.ajax({
+                url: '/ajax/movie/review/' + $btn.data('review-id') + '/delete/',
+                type: 'POST',
+                data: { csrf_token: csrfToken },
+                success: function () {
+                    $card.remove();
+                    if ($('#reviews-section .rf-review').length === 0) { $('#no_reviews').show(); }
+                },
+                error: function (xhr) {
+                    $btn.prop('disabled', false).text('Delete');
+                    alert(errorText(xhr));
+                }
+            });
+        });
+
+        // ratings: the stars show the person's saved rating until they pick another
+        var rating_data = {{ my_rating or 0 }};
+        var saved_rating = rating_data;
+
+        function paintStars(upTo) {
+            $('.submit-star').each(function () {
+                var on = $(this).data('rating') <= upTo;
+                $(this).toggleClass('is-on', on).attr('aria-pressed', on && $(this).data('rating') === upTo ? 'true' : 'false');
+            });
+        }
+        paintStars(rating_data);
+
+        $('.submit-star').on('mouseenter focus', function () {
+            paintStars($(this).data('rating'));
+        }).on('mouseleave blur', function () {
+            paintStars(rating_data);
+        });
+
+        $('.submit-star').click(function () {
+            rating_data = $(this).data('rating');
+            paintStars(rating_data);
+            $('#rating_msg').removeClass('text-danger text-success').text(
+                rating_data === saved_rating ? '' : rating_data + (rating_data === 1 ? ' star' : ' stars') + ' picked. Save to keep it.');
+        });
+
+        function ratingMessage(text, isError) {
+            $('#rating_msg').removeClass('text-danger text-success')
+                .addClass(isError ? 'text-danger' : 'text-success').text(text);
+        }
+
+        $('#submit_rating').click(function () {
+            if (rating_data === 0) {
+                ratingMessage('Pick a number of stars first.', true);
+                return;
+            }
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('Saving...');
+            $.ajax({
+                url: '/user/submitrating/',
+                type: 'POST',
+                data: { rating: rating_data, movieId: movieId, csrf_token: csrfToken },
+                success: function (resp) {
+                    rating_data = saved_rating = resp.your_rating;
+                    paintStars(rating_data);
+                    var average = Number(resp.average_rating);
+                    $('#my_rating_text').text(resp.your_rating + '/5');
+                    $('#average_rating').text(average.toFixed(1));
+                    var stars = document.getElementById('average_stars');
+                    if (stars) {
+                        stars.style.setProperty('--rf-score', average);
+                        stars.setAttribute('aria-label', average.toFixed(1) + ' out of 5 stars');
+                    }
+                    $('#rating_count').text(resp.rating_count + (resp.rating_count === 1 ? ' rating' : ' ratings'));
+                    $btn.text('Update rating');
+                    ratingMessage('Rating saved', false);
+                },
+                error: function (xhr) {
+                    $btn.text($('#my_rating_text').text() ? 'Update rating' : 'Save rating');
+                    ratingMessage(errorText(xhr), true);
+                },
+                complete: function () {
+                    $btn.prop('disabled', false);
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

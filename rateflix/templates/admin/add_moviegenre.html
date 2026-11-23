@@ -1,25 +1,28 @@
 {% extends 'admin/admin_base.html' %}
+{% import '_macros.html' as ui %}
+{% block admintitle %}Add genres to {{ movie.movie_title }}{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Add Genre to {{ movie.movie_title }}</h1>
-                
-                    <form method="post" action="/admin/addgenre/{{ movie.movie_id}}/" novalidate>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<a class="rf-back" href="/admin/movie/genre/{{ movie.movie_id }}/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Genres for {{ movie.movie_title }}</a>
+<div class="rf-admin-head">
+    <div>
+        <h1>Add genres</h1>
+        <p>Pick one or more genres for {{ movie.movie_title }}.</p>
+    </div>
+</div>
 
-                    {% for g in genres %}
-                        {% if g.genre_id not in movie_genre_ids %}
-                            <input type="checkbox" name="genre"  value="{{ g.genre_id }}" class="form-check-input mb-2" >
-                            <label> {{ g.genre_name }}</label>
-                        {% endif %}
-                    {% endfor %}
-
-                    
-
-                        <button class="btn btn-primary d-block mt-2" >Add genre</button>
-                    </form>
-
-                  {{ movie.genres.genre_id }}
-                </div>
+<form class="rf-panel rf-panel__body" method="post" style="max-width: 760px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if genres|rejectattr('genre_id', 'in', movie_genre_ids)|list %}
+        <div role="group" aria-label="Genres" class="mb-4">
+            {{ ui.genre_chips(genres, hide=movie_genre_ids) }}
+        </div>
+        <div class="rf-form-actions">
+            <button class="btn btn-primary" type="submit">Add selected genres</button>
+            <a class="btn btn-quiet" href="/admin/movie/genre/{{ movie.movie_id }}/">Cancel</a>
+        </div>
+    {% else %}
+        <p class="rf-muted mb-3">This movie already has every genre. Add a new genre first.</p>
+        <a class="btn btn-quiet" href="/admin/genre/add/">Add a genre</a>
+    {% endif %}
+</form>
 {% endblock %}
-

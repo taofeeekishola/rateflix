@@ -1,0 +1,14 @@
+{# "Are you sure?" card used by every delete page #}
+{% macro confirm(title, message, confirm_href, cancel_href, button, note=None) %}
+<a class="rf-back" href="{{ cancel_href }}"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back</a>
+<div class="rf-panel rf-panel__body rf-confirm mt-2">
+    <div class="rf-confirm__icon"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></div>
+    <h1>{{ title }}</h1>
+    <p class="rf-muted mb-2">{{ message }}</p>
+    {% if note %}<p class="rf-muted mb-0">{{ note }}</p>{% endif %}
+    <div class="rf-form-actions mt-4">
+        <a class="btn btn-danger" href="{{ confirm_href }}">{{ button }}</a>
+        <a class="btn btn-quiet" href="{{ cancel_href }}">Cancel</a>
+    </div>
+</div>
+{% endmacro %}

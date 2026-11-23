@@ -1,37 +1,39 @@
 {% extends 'admin/admin_base.html' %}
+{% block admintitle %}Studios{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Studio</h1>
-                    {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                            {% for message in messages %}
-                                <p class="alert alert-success"> {{ message }} </p>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                    <a href="/admin/studio/add/" class="btn btn-primary text-end" >Add Studio</a>
-                    <table class="table">
-                            <thead>
-                                <tr>
-                                    <td>S/N</td>
-                                    <td>Name</td>
-                                    <td>Activity</td>
-                                </tr>
-                            </thead>
+<div class="rf-admin-head">
+    <div>
+        <h1>Studios</h1>
+        <p>Members can filter movies by studio on the home page.</p>
+    </div>
+    <a href="/admin/studio/add/" class="btn btn-primary"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Add a studio</a>
+</div>
 
-                            <tbody>
-                                {% for s in studio %}
-                                    <tr>
-                                        <td>{{ loop.index }}</td>
-                                        <td>{{ s.studio_name }}</td>
-                                        <td>
-                                            <a href="/admin/update/studio/{{s.studio_id}}" class="btn btn-primary">Update</a>
-                                            <a href="/admin/delete/studio/{{ s.studio_id }}/" class="btn btn-danger" >Delete</a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                    </table>
-                </div>
+<div class="rf-panel" style="max-width: 760px;">
+    {% if studio %}
+    <table class="table rf-table rf-table--stack">
+        <thead>
+            <tr>
+                <th scope="col">Studio</th>
+                <th scope="col" class="text-end">Movies</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in studio %}
+            <tr>
+                <td class="rf-td-main"><strong class="fw-semibold">{{ s.studio_name }}</strong></td>
+                <td data-label="Movies" class="text-end">{{ s.movie|count }}</td>
+                <td class="rf-actions-cell">
+                    <a href="/admin/update/studio/{{ s.studio_id }}/" class="btn btn-quiet btn-icon btn-sm" title="Edit" aria-label="Edit {{ s.studio_name }}"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                    <a href="/admin/delete/studio/{{ s.studio_id }}/" class="btn btn-quiet btn-icon btn-sm text-danger" title="Delete" aria-label="Delete {{ s.studio_name }}"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="rf-panel__body rf-muted">No studios yet.</div>
+    {% endif %}
+</div>
 {% endblock %}

@@ -1,80 +1,81 @@
 {% extends 'base.html' %}
+{% import '_macros.html' as ui %}
+{% block title %}Create an account | RateFlix{% endblock %}
+{% block notices %}{% endblock %}
+
 {% block content %}
-    <div class="row mt-5">
-        <div class="col-md-6 offset-3">
-            <h2>CREATE AN ACCOUNT</h2>
-            <form action="{{ url_for('user_signup') }}" method="post" novalidate>
-                {{ signup.csrf_token }}
-
-                {{ signup.first_name(class='form-control mb-2', placeholder='First Name') }}
-                {% if signup.first_name.errors %}
-                    {% for error in signup.first_name.errors %}
-                        <p> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-
-                {{ signup.last_name(class='form-control mb-2', placeholder='Last Name') }}
-                {% if signup.last_name.errors %}
-                    {% for error in signup.last_name.errors %}
-                        <p> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-
-                <div class="d-flex align-items-center mb-2">
-                    {{ signup.user_name(class='form-control me-2', placeholder='Username', id='username') }}
-                    <span id="userverf"></span>
-                </div>
-                {% if signup.user_name.errors %}
-                    {% for error in signup.user_name.errors %}
-                        <p class="text-danger"> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-                
-                 <div class="d-flex align-items-center mb-2"></div>
-                {{ signup.email(class='form-control mb-2', placeholder='Email' , id='email') }}
-                <span id="emailval"></span>
-                {% if signup.email.errors %}
-                    {% for error in signup.email.errors %}
-                        <p> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-
-                {{ signup.password(class='form-control mb-2', placeholder='Password') }}
-                {% if signup.password.errors %}
-                    {% for error in signup.password.errors %}
-                        <p> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-
-                {{ signup.con_password(class='form-control mb-2', placeholder='Confirm Password') }}
-                {% if signup.con_password.errors %}
-                    {% for error in signup.con_password.errors %}
-                        <p> {{ error }} </p>
-                    {% endfor %}
-                {% endif %}
-
-                {{ signup.signup(class='btn btn-primary') }}
-            </form>
+<div class="rf-auth">
+    <div class="rf-auth__art" aria-hidden="true">
+        <div class="rf-auth__wall">
+            {% for poster in posters %}<img src="/static/uploads/poster/{{ poster }}" alt="">{% endfor %}
+        </div>
+        <div>
+            <h2>Join the audience.</h2>
+            <p>Rate movies, write reviews and add the films RateFlix is missing.</p>
         </div>
     </div>
+
+    <div class="rf-auth__form">
+        <div class="rf-auth__box">
+            <h1>Create an account</h1>
+            <p class="rf-muted">It takes a minute. You can add a photo and bio later.</p>
+            {{ ui.notices() }}
+
+            <form action="{{ url_for('user_signup') }}" method="post" novalidate>
+                {{ signup.csrf_token }}
+                <div class="rf-form-grid">
+                    {{ ui.field(signup.first_name, label='First name', autocomplete='given-name') }}
+                    {{ ui.field(signup.last_name, label='Last name', autocomplete='family-name') }}
+                </div>
+
+                <div class="rf-field{% if signup.user_name.errors %} is-invalid{% endif %}">
+                    <label class="rf-label" for="username">Username</label>
+                    {{ signup.user_name(class='form-control', id='username', autocomplete='username', **{'aria-describedby': 'userverf'}) }}
+                    <p class="rf-hint" id="userverf" aria-live="polite">This is the name other people see on your reviews.</p>
+                    {{ ui.errors(signup.user_name) }}
+                </div>
+
+                <div class="rf-field{% if signup.email.errors %} is-invalid{% endif %}">
+                    <label class="rf-label" for="email">Email</label>
+                    {{ signup.email(class='form-control', id='email', type='email', autocomplete='email', placeholder='you@example.com', **{'aria-describedby': 'emailval'}) }}
+                    <p class="rf-hint" id="emailval" aria-live="polite"></p>
+                    {{ ui.errors(signup.email) }}
+                </div>
+
+                <div class="rf-form-grid">
+                    {{ ui.field(signup.password, label='Password', autocomplete='new-password') }}
+                    {{ ui.field(signup.con_password, label='Confirm password', autocomplete='new-password') }}
+                </div>
+
+                {{ signup.signup(class='btn btn-primary btn-lg w-100 mt-2', value='Create account') }}
+            </form>
+
+            <p class="rf-auth__alt">Already have an account? <a href="/user/login/">Log in</a></p>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-    <script>
-        $(document).ready(function(){
-            //checking is the username is avaliable or taken
-            $('#username').change(function(){
-                var username = $(this).val()
-                var data2send = 'username='+username
-                $('#userverf').load('/user/valusername/',data2send)
+<script>
+    $(document).ready(function () {
+        // tells the person straight away if the username or email is already in use
+        function check(url, data, $hint) {
+            $.get(url, data).done(function (text) {
+                var taken = /taken/i.test(text);
+                $hint.text(text).toggleClass('is-bad', taken).toggleClass('is-good', !taken);
             });
+        }
 
-            //checking if the email is avaliable or taken
-            $('#email').change(function(){
-                var email = $(this).val()
-                var data2send = 'email='+email
-                $('#emailval').load('/user/emailval/',data2send)
-            });
+        $('#username').change(function () {
+            var username = $.trim($(this).val());
+            if (username) { check('/user/valusername/', { username: username }, $('#userverf')); }
         });
-    </script>
+
+        $('#email').change(function () {
+            var email = $.trim($(this).val());
+            if (email) { check('/user/emailval/', { email: email }, $('#emailval')); }
+        });
+    });
+</script>
 {% endblock %}

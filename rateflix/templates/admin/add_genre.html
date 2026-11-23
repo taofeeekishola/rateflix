@@ -1,21 +1,6 @@
 {% extends 'admin/admin_base.html' %}
+{% import 'admin/_name_form.html' as nf %}
+{% block admintitle %}Add a genre{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Add Genre</h1>
-                
-                    <form method="post" action="/admin/genre/add/" novalidate>
-                        {{ genre.csrf_token }}
-
-                        {{ genre.name(class_='form-control mb-3', placeholder='Genre Name') }}
-                        {% if genre.name.errors %}
-                            {% for error in genre.name.errors %}
-                                <p class="text-danger" > {{ error }} </p>
-                            {% endfor %}
-                        {% endif %}
-
-                        {{ genre.add(class_='btn btn-primary') }}
-
-                    </form>
-                </div>
+{{ nf.name_form(genre, '/admin/genres/', 'Genres', 'Add a genre', 'It appears in the genre filter once a movie is tagged with it.', 'Genre name', 'Add genre') }}
 {% endblock %}

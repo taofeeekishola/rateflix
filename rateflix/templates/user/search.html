@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% import '_macros.html' as ui %}
+{% block title %}{% if q %}{{ q }}: search{% else %}Search{% endif %} | RateFlix{% endblock %}
+
+{% block content %}
+<section class="rf-wrap rf-section">
+    <div class="rf-page-head">
+        {% if q %}
+            <h1>Results for "{{ q }}"</h1>
+            <p>{{ movies|length }} {{ 'movie' if movies|length == 1 else 'movies' }} with that in the title</p>
+        {% else %}
+            <h1>Search movies</h1>
+            <p>Type part of a movie title.</p>
+        {% endif %}
+    </div>
+
+    <form class="rf-search mb-4" action="{{ url_for('search') }}" method="get" role="search" style="max-width: 520px;">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <label class="visually-hidden" for="page-search">Search movies by title</label>
+        <input id="page-search" class="form-control form-control-lg" type="search" name="q" value="{{ q }}" placeholder="Search movies"{% if not q %} autofocus{% endif %}>
+    </form>
+
+    {% if q %}
+    <div class="rf-grid">
+        {% for movie in movies %}
+            {{ ui.movie_card(movie, scores.get(movie.movie_id)) }}
+        {% else %}
+            <div class="rf-empty">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <h3>No movies found for "{{ q }}"</h3>
+                <p>Check the spelling, try fewer words, or browse every movie instead.</p>
+                <a class="btn btn-quiet" href="{{ url_for('home') }}#browse">Browse all movies</a>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

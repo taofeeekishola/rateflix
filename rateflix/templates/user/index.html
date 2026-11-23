@@ -1,556 +1,160 @@
 {% extends 'base.html' %}
+{% import '_macros.html' as ui %}
+{% block title %}RateFlix: rate and review movies{% endblock %}
+
 {% block content %}
-        <!--Information scrolling-->
-        <div class="row">
-            <div class="col-md-12">
-                <div id="techNews" class="carousel slide">
-                    <div class="carousel-indicators">
-                        <button type="button" data-bs-target="#techNews" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                        <button type="button" data-bs-target="#techNews" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                        <button type="button" data-bs-target="#techNews" data-bs-slide-to="2" aria-label="Slide 3"></button>
-                    </div>
-                    <div class="carousel-inner">
-                        <div class="carousel-item active item text-left c-item">
-                        <img src="/static/Images/deapool.jpg" class="d-block w-100" alt="deadpool and wolverine walking">
-                        <div class="carousel-caption top-0 mt-4">
-                            <h1 class="mt-5">Here at <span class="bg-primary rounded p-1">RateFlix</span> We Rate Movies</h1>
-                            <h3>Discover and share movie reviews, ratings, and personalized watchlists with our community of film enthusiasts</h3>
-                        </div>
-                        </div>
-                    </div>
-                </div>
+{% set is_filtered = selected.year or selected.genre or selected.studio %}
+
+{% if featured %}
+{% set fscore = scores.get(featured.movie_id) %}
+<section class="rf-stage" aria-labelledby="featured-title">
+    <div class="rf-stage__backdrop" style="--stage-img: url('/static/uploads/poster/{{ featured.movie_poster }}')" aria-hidden="true"></div>
+    <div class="rf-wrap rf-stage__inner">
+        <a class="rf-stage__poster" href="/movie/info/{{ featured.movie_id }}" tabindex="-1" aria-hidden="true">
+            <img src="/static/uploads/poster/{{ featured.movie_poster }}" alt="">
+        </a>
+
+        <div class="rf-stage__head">
+            <p class="rf-stage__kicker">
+                <i class="fa-solid {{ 'fa-star' if featured_is_top else 'fa-clapperboard' }}" aria-hidden="true"></i>
+                {{ 'Highest rated on RateFlix' if featured_is_top else 'Newest on RateFlix' }}
+            </p>
+            <h1 class="rf-stage__title" id="featured-title">{{ featured.movie_title }}</h1>
+            <div class="rf-meta">
+                {% if featured.movie_release_date %}<span>{{ featured.movie_release_date.year }}</span>{% endif %}
+                {% for mg in featured.genres %}
+                    <a class="rf-chip" href="/?genre={{ mg.genre_id }}#browse">{{ mg.genre.genre_name }}</a>
+                {% endfor %}
             </div>
         </div>
 
-        <!--filter heading-->
-        <div class="row mt-5">
-            <div class="col-md-12">
-                <h3 class="sub-heading">FILTER</h3>
+        <div class="rf-stage__body">
+            {% if fscore %}
+            <div class="rf-score mb-3">
+                <span class="rf-score__num">{{ '%.1f'|format(fscore[0]) }}<small>/5</small></span>
+                {{ ui.stars(fscore[0]) }}
+                <span class="rf-score__count">{{ fscore[1] }} {{ 'rating' if fscore[1] == 1 else 'ratings' }}</span>
             </div>
-        </div>
-
-        <!--filtering movies-->
-        <div class="row">
-          <div class="col-md-12">
-              <p class="text-primary">Please pick only one filter</p>
-          </div>
-            <div class="col-md-4">
-                <h4>Release Year</h4>
-                <select name="year" id="year" class="form-select mb-3 selections">
-                    <option value=""> Select a year </option>
-                    <option value="2006"> 2006 </option>
-                    <option value="2007"> 2007 </option>
-                    <option value="2008"> 2008 </option>
-                    <option value="2009"> 2009 </option>
-                    <option value="2010"> 2010 </option>
-                    <option value="2011"> 2011 </option>
-                    <option value="2012"> 2012 </option>
-                    <option value="2013"> 2013 </option>
-                    <option value="2014"> 2014 </option>
-                    <option value="2015"> 2015 </option>
-                    <option value="2016"> 2016 </option>
-                    <option value="2017"> 2017 </option>
-                    <option value="2018"> 2018 </option>
-                    <option value="2019"> 2019 </option>
-                    <option value="2020"> 2020 </option>
-                    <option value="2021"> 2021 </option>
-                    <option value="2022"> 2022 </option>
-                    <option value="2023"> 2023 </option>
-                    <option value="2024"> 2024 </option>
-                </select>
-            </div>
-
-            <div class="col-md-4">
-                <h4>Genre</h4>
-                <select name="genre" id="genre" class="form-select mb-3 selections">
-                    <option value=""> Select a genre </option>
-                    {% for g in genres %}
-                        <option value="{{ g.genre_id }}"> {{ g.genre_name }} </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-md-4">
-                <h4>Studio</h4>
-                <select name="studio" id="studio" class="form-select mb-3 selections">
-                    <option value=""> Select a studio </option>
-                    {% for s in studio %}
-                        <option value="{{ s.studio_id }}"> {{ s.studio_name }} </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-          <!-- <div class="row">
-              <div class="col-md-12 text-center">
-                  <button class="btn btn-primary" id="filter">Filter</button>
-              </div>
-          </div> -->
-
-        <!--Popular in theater header-->
-        <div class="row mt-5">
-            <div class="col-md-12">
-                <h3 class="sub-heading">Movies</h3>
-            </div>
-        </div>
-
-        <!--Popular in theater-->
-       <div class="row" id="movies">
-        {% if movies %}
-          {% for movie in movies %}
-            <div class="col-6 col-md-4 col-lg-2 mb-4">
-              <div class="card card-custom">
-                {% if movie.movie_poster == "" or movie.movie_poster == None %}
-                  <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top " alt="Movie Poster"></a>
-                {% else %}
-                  <a href="/movie/info/{{ movie.movie_id }}"><img src="/static/uploads/poster/{{ movie.movie_poster }}" class="card-img-top poster" alt="{{ movie.movie_poster }}"></a>
+            {% endif %}
+            {% if featured.movie_description %}
+                <p class="rf-stage__desc">{{ featured.movie_description|truncate(240) }}</p>
+            {% endif %}
+            <div class="rf-actions">
+                <a class="btn btn-primary btn-lg" href="/movie/info/{{ featured.movie_id }}">Rate and review</a>
+                {% if featured.movie_trailer %}
+                <a class="btn btn-on-stage btn-lg" href="/movie/info/{{ featured.movie_id }}#trailer"><i class="fa-solid fa-play me-2" aria-hidden="true"></i>Watch the trailer</a>
                 {% endif %}
-                <div class="card-body">
-                  <a href="/movie/info/{{ movie.movie_id }}"><p class="card-title mb-2 fs-6">{{ movie.movie_title }}</p></a>
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                  
-                  </div>
-                  <!-- Align the buttons side by side with equal width and reduced height -->
-                  <div class="d-flex justify-content-center align-items-center">
-                    <a href="/movie/info/{{ movie.movie_id }}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-         {% endfor %}
-        {% endif %}
-        </div>
-
-      {#
-        <!--Currently streaming header-->
-         <div class="row mt-5">
-            <div class="col-md-6">
-                <h3 class="sub-heading">Currently Streaming</h3>
             </div>
         </div>
+    </div>
+</section>
+{% endif %}
 
-         <!--Currently streaming -->
-        <div class="row">
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/aco.jpg" class="card-img-top" alt="The Acolyte"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Acolyte</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <!-- Ensure the buttons have the same width and height -->
-              <div class="d-flex flex-column align-items-center">
-                  <a href="#" class="btn btn-primary btn-sm w-100 mb-2"><i class="fa-solid fa-play"></i> Trailer</a>
-                  <button class="btn btn-outline-primary btn-sm w-100 movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-     
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/hodg.jpg" class="card-img-top" alt="House of the dragons"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">House Of The Dragon</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">10/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <!-- Ensure the buttons have the same width and height -->
-              <div class="d-flex flex-column align-items-center">
-                  <a href="#" class="btn btn-primary btn-sm w-100 mb-2"><i class="fa-solid fa-play"></i> Trailer</a>
-                  <button class="btn btn-outline-primary btn-sm w-100 movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
+<section class="rf-wrap rf-section" id="browse" aria-labelledby="browse-title">
+    <div class="rf-section__head rf-browse-head">
+        <div>
+            <h2 id="browse-title">Browse movies</h2>
+            <p id="movie_count" class="mt-1" aria-live="polite">
+                {% if is_filtered %}Showing {{ movies|length }} of {{ total }} {{ 'movie' if total == 1 else 'movies' }}{% else %}Showing all {{ total }} {{ 'movie' if total == 1 else 'movies' }}{% endif %}
+            </p>
         </div>
 
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/myspy.jpg" class="card-img-top" alt="Fly me to the moon"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">My Spy</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">3/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <!-- Ensure the buttons have the same width and height -->
-              <div class="d-flex flex-column align-items-center">
-                  <a href="#" class="btn btn-primary btn-sm w-100 mb-2"><i class="fa-solid fa-play"></i> Trailer</a>
-                  <button class="btn btn-outline-primary btn-sm w-100 movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
+        <form class="rf-filters" id="filters" action="/" method="get" aria-label="Filter movies">
+            <div class="rf-filter-year">
+                <label class="visually-hidden" for="year">Release year</label>
+                <select name="year" id="year" class="form-select selections">
+                    <option value="">Any year</option>
+                    {% for y in years %}
+                        <option value="{{ y }}"{% if selected.year == y %} selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
             </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/viking2.jpg" class="card-img-top" alt="Vikings"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Vikings</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">8/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <!-- Ensure the buttons have the same width and height -->
-              <div class="d-flex flex-column align-items-center">
-                  <a href="#" class="btn btn-primary btn-sm w-100 mb-2"><i class="fa-solid fa-play"></i> Trailer</a>
-                  <button class="btn btn-outline-primary btn-sm w-100 movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
+            <div>
+                <label class="visually-hidden" for="genre">Genre</label>
+                <select name="genre" id="genre" class="form-select selections">
+                    <option value="">Any genre</option>
+                    {% for g in genres %}
+                        <option value="{{ g.genre_id }}"{% if selected.genre == g.genre_id %} selected{% endif %}>{{ g.genre_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/office.jpg" class="card-img-top" alt="The Office"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Office</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">8/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <!-- Ensure the buttons have the same width and height -->
-              <div class="d-flex flex-column align-items-center">
-                  <a href="#" class="btn btn-primary btn-sm w-100 mb-2"><i class="fa-solid fa-play"></i> Trailer</a>
-                  <button class="btn btn-outline-primary btn-sm w-100 movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
+            <div>
+                <label class="visually-hidden" for="studio">Studio</label>
+                <select name="studio" id="studio" class="form-select selections">
+                    <option value="">Any studio</option>
+                    {% for s in studio %}
+                        <option value="{{ s.studio_id }}"{% if selected.studio == s.studio_id %} selected{% endif %}>{{ s.studio_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-          </div>
-        </div>
+            <button type="button" class="btn btn-link px-2" id="clear_filters"{% if not is_filtered %} hidden{% endif %}>Clear filters</button>
+            <noscript><button class="btn btn-quiet" type="submit">Apply</button></noscript>
+        </form>
+    </div>
 
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/walkingdead.jpg" class="card-img-top" alt="The Walking Dead"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Walking Dead</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">6/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <!-- Ensure the buttons have the same width and height -->
-              <div class="d-flex flex-column align-items-center">
-                  <a href="#" class="btn btn-primary btn-sm w-100 mb-2"><i class="fa-solid fa-play"></i> Trailer</a>
-                  <button class="btn btn-outline-primary btn-sm w-100 movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="rf-grid" id="movies">
+        {% with filtered = is_filtered %}{% include 'user/_movie_grid.html' %}{% endwith %}
+    </div>
+</section>
+{% endblock %}
 
-        </div>
-
-        <!--Highly rated header-->
-        <div class="row mt-5">
-            <div class="col-md-6">
-                 <h3 class="sub-heading">Highly Rated</h3>
-            </div>
-        </div>
-
-        <!--Highly rated-->
-        <div class="row">
-            <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/hodg.jpg" class="card-img-top" alt="House of the dragons"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">House Of The Dragon</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">10/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/inside.jpg" class="card-img-top" alt="Inside out"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Inside Out 2</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/aco.jpg" class="card-img-top" alt="The Acolyte"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Acolyte</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/viking2.jpg" class="card-img-top" alt="Vikings"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Vikings</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">8/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/office.jpg" class="card-img-top" alt="The Office"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Office</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">8/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top" alt="Despicable Me 4"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Despicable Me 4</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">7/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-               <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        </div>
-
-        
-        <!--Popular reviews header-->
-        <div class="row mt-5">
-            <div class="col-md-6">
-                <h3 class="sub-heading">Popular Reviews</h3>
-            </div>
-        </div>
-
-         <!--Popular reviews-->
-        <div class="row mb-5">
-            <div class="col-md-6 d-flex align-items-center mt-5">
-                <div class="review">
-                    <img src="/static/Images/hodg.jpg" alt="" class="img-fluid">
-                </div>
-                <div class="text-container ms-2">
-                    <h3 class="d-block">House Of The Dragon</h3>
-                    <p class="d-block">Randoman 10/10&nbsp;<i class="fa-solid fa-star"></i> &nbsp;<i class="fa-solid fa-comment"></i>20 &nbsp;<i class="fa-solid fa-heart"></i>200</p>
-                    <p>The best thing after sliced bread</p>
-                </div>
-            </div>
-            <div class="col-md-6 d-flex  align-items-center mt-5">
-                <div class="review">
-                    <img src="/static/Images/dispicableme.jpg" alt="" class="img-fluid">
-                </div>
-               <div class="text-container ms-2">
-                    <h3 class="d-block">Despicable Me 4</h3>
-                    <p class="d-block">bossmansouth 6/10&nbsp;<i class="fa-solid fa-star"></i> &nbsp;<i class="fa-solid fa-comment"></i>10 &nbsp;<i class="fa-solid fa-heart"></i>500</p>
-                    <p>Minions: Chaos, bananas, and laughter.</p>
-                </div>
-            </div>
-            <div class="col-md-6 d-flex align-items-center mt-5">
-                <div class="review">
-                    <img src="/static/Images/myspy.jpg" alt="" class="img-fluid">
-                </div>
-               <div class="text-container ms-2">
-                    <h3 class="d-block">My Spy The Eternal City</h3>
-                    <p class="d-block">bossmaneast 2/10&nbsp;<i class="fa-solid fa-star"></i> &nbsp;<i class="fa-solid fa-comment"></i>10 &nbsp;<i class="fa-solid fa-heart"></i>756</p>
-                    <p>Dull action, clichéd jokes, uninspired.</p>
-                </div>
-            </div>
-           <div class="col-md-6 d-flex  align-items-center mt-5">
-                <div class="review">
-                   <img src="/static/Images/badboys.jpg" alt="" class="img-fluid">
-                </div>
-               <div class="text-container ms-2">
-                    <h3 class="d-block">Bad Boys Ride or Die</h3>
-                    <p class="d-block">bossmansnorth 4/10&nbsp;<i class="fa-solid fa-star"></i> &nbsp;<i class="fa-solid fa-comment"></i>56 &nbsp;<i class="fa-solid fa-heart"></i>1000</p>
-                    <p>Explosions, clichés, and a lot of shouting</p>
-                </div>
-            </div>
-        </div>
-
-        <!--Coming soon heading-->
-        <div class="row">
-            <div class="col-md-6 mt-5">
-                <h3 class="sub-heading">Coming soon to theaters</h3>
-            </div>
-        </div>
-
-        <!--Coming soon-->
-        <div class="row">
-            <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/alien.jpg" class="card-img-top" alt="Alien Romulus"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Alien Romulus</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">0/0<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/beast.jpg" class="card-img-top" alt="The Beast Within"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Beast Within</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">0/0<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-               <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/wolf.jpg" class="card-img-top" alt="Deadpool & Wolverine"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Deadpool & Wolverine</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">0/0<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/gladiator.jpg" class="card-img-top" alt="Gladiator 2"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Gladiator 2</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">0/0<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/did.jpg" class="card-img-top" alt="Didi"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Didi</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">0/0<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/swan.jpg" class="card-img-top" alt="Swan Song"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Swan Song</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">0/0<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        </div>
-        #}
-
-{% endblock content %}
 {% block scripts %}
-    <script>
-        $(document).ready(function(){
-          $('.selections').change(function(){
-              var year = $('#year').val();
-              var genre = $('#genre').val();
-              var studio = $('#studio').val();
+<script>
+    $(function () {
+        var total = {{ total }};
+        var request = 0;
 
-              var data = {};
-              if (year) data.year = year;
-              if (genre) data.genre = genre;
-              if (studio) data.studio = studio;
+        function plural(n) { return n === 1 ? ' movie' : ' movies'; }
 
-              console.log(data)
-              $.ajax({
-                  url: '/ajax/movie/filter/',
-                  type: 'GET',
-                  data: data,
+        function anyFilter() {
+            return !!($('#year').val() || $('#genre').val() || $('#studio').val());
+        }
 
-                  success:function(resp){
-                    $('#movies').html(resp)
-                  },
-                  error:function(err){
-                    console.log(err)
-                  }
+        function updateCount() {
+            var shown = $('#movies .rf-card').length;
+            $('#movie_count').text(anyFilter() ? 'Showing ' + shown + ' of ' + total + plural(total)
+                                               : 'Showing all ' + total + plural(total));
+            $('#clear_filters').prop('hidden', !anyFilter());
+        }
+
+        // the filters can be combined; the address bar keeps them so the page can be shared or refreshed
+        function applyFilters() {
+            var params = {};
+            ['year', 'genre', 'studio'].forEach(function (key) {
+                var value = $('#' + key).val();
+                if (value) { params[key] = value; }
+            });
+            var query = $.param(params);
+            history.replaceState(null, '', query ? '/?' + query : '/');
+
+            var mine = ++request;
+            $('#movies').addClass('is-loading').attr('aria-busy', 'true');
+            $.get('/ajax/movie/filter/', params)
+                .done(function (html) {
+                    if (mine !== request) { return; }   // a newer filter change is on its way
+                    $('#movies').html(html);
+                    updateCount();
+                })
+                .fail(function () {
+                    if (mine !== request) { return; }
+                    $('#movie_count').text('Movies could not be loaded. Check your connection and try again.');
+                })
+                .always(function () {
+                    if (mine !== request) { return; }
+                    $('#movies').removeClass('is-loading').removeAttr('aria-busy');
+                });
+        }
+
+        $('.selections').on('change', applyFilters);
+        $('#clear_filters').on('click', function () {
+            $('.selections').val('');
+            applyFilters();
+            $('#year').trigger('focus');
+        });
+        $('#filters').on('submit', function (event) {
+            event.preventDefault();
+            applyFilters();
         });
     });
-});
-
-    </script>
+</script>
 {% endblock %}

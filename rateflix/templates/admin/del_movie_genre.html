@@ -1,16 +1,9 @@
 {% extends 'admin/admin_base.html' %}
+{% import 'admin/_confirm.html' as c %}
+{% block admintitle %}Remove a genre{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    
-                     {% if genre %}
-                        <h1 class="my-4">Delete {{ genre.genre.genre_name }}</h1>
-                    {% else %}
-                        <h1 class="my-4">Genre not found</h1>
-                    {% endif %}
-                    
-                    <h3>Are you sure you want to delete</h3>
-                    <a href="/admin/movie/genre/{{ movie.movie_id }}/" class="btn btn-primary">No</a>
-                    <a href="/admin/delgenre/confirm/{{ movie.movie_id }}/{{ genre.genre_id }}/" class="btn btn-danger" >Yes</a>
-                </div>
+{{ c.confirm('Remove ' ~ genre.genre.genre_name ~ ' from ' ~ movie.movie_title ~ '?',
+             'The movie stops showing up under this genre. The genre itself stays.',
+             '/admin/delgenre/confirm/' ~ movie.movie_id ~ '/' ~ genre.genre_id ~ '/',
+             '/admin/movie/genre/' ~ movie.movie_id ~ '/', 'Remove genre') }}
 {% endblock %}

@@ -1,7 +1,9 @@
 import os
+from datetime import date
 
-from flask import Flask, abort, send_from_directory
+from flask import Flask, abort, render_template, send_from_directory, session
 from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import safe_join
@@ -70,6 +72,27 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app,db)
     csrf.init_app(app)
+
+    ## values every template can use: the signed-in member (or None) and the current year
+    @app.context_processor
+    def template_globals():
+        from rateflix.models import Member
+        member_id = session.get('member_id')
+        member = db.session.get(Member, member_id) if member_id is not None else None
+        return {'current_member': member, 'current_year': date.today().year}
+
+    ## friendly pages instead of the plain browser error pages
+    @app.errorhandler(CSRFError)
+    def form_expired(error):
+        return render_template('error.html', title='This form has expired',
+                               message='The page was open too long or your session changed, so the form could not be verified. '
+                                       'Go back, refresh the page and try again.',
+                               detail=error.description), 400
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template('error.html', title='Page not found',
+                               message='The page you were looking for does not exist or was removed.'), 404
 
     ## serves /static/uploads/... from the upload folder first, then from the files in the repo,
     ## so the templates can keep using /static/uploads/... paths

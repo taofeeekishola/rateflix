@@ -1,6 +1,6 @@
 import secrets,os
 from datetime import datetime
-from flask import render_template,request,redirect,flash,url_for,session,jsonify
+from flask import render_template,request,redirect,flash,url_for,session,jsonify,abort
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy import extract
 
@@ -38,18 +38,80 @@ def similar_movies_for(movie_id, limit=5):
             .limit(limit)
             .all())
 
+## average rating and number of ratings for several movies at once: {movie_id: (average, count)}
+def rating_summaries(movie_ids):
+    movie_ids = list(movie_ids)
+    if not movie_ids:
+        return {}
+    rows = (db.session.query(Rating.movie_id, db.func.avg(Rating.rating_score), db.func.count(Rating.rating_id))
+            .filter(Rating.movie_id.in_(movie_ids))
+            .group_by(Rating.movie_id))
+    return {movie_id: (round(float(average), 1), count) for movie_id, average, count in rows}
+
+## approved movies, narrowed by release year, genre and studio in any combination, newest first
+def browse_movies(year=None, genre=None, studio=None):
+    query = Movie.query.filter(Movie.movie_status == 'approved')
+    if year:
+        query = query.filter(extract('year', Movie.movie_release_date) == year)
+    if genre:
+        query = query.filter(Movie.genres.any(MovieGenre.genre_id == genre))
+    if studio:
+        query = query.filter(Movie.production_studio == studio)
+    return query.order_by(Movie.movie_release_date.desc(), Movie.movie_id.desc()).all()
+
+## the movie at the top of the home page: the highest rated movie that has a poster
+## (ties go to the one with more ratings). If nobody has rated anything yet, the newest movie.
+## Returns (movie, is_top_rated)
+def featured_movie():
+    has_poster = (Movie.movie_status == 'approved', Movie.movie_poster.isnot(None), Movie.movie_poster != '')
+    ratings = (db.session.query(Rating.movie_id.label('movie_id'),
+                                db.func.avg(Rating.rating_score).label('average'),
+                                db.func.count(Rating.rating_id).label('total'))
+               .group_by(Rating.movie_id)
+               .subquery())
+    top = (Movie.query.join(ratings, ratings.c.movie_id == Movie.movie_id)
+           .filter(*has_poster)
+           .order_by(ratings.c.average.desc(), ratings.c.total.desc(), Movie.movie_release_date.desc())
+           .first())
+    if top:
+        return top, True
+    newest = (Movie.query.filter(*has_poster)
+              .order_by(Movie.movie_release_date.desc(), Movie.movie_id.desc())
+              .first())
+    return newest, False
+
+## posters for the background of the log in and sign up pages
+def poster_wall(limit=12):
+    movies = (Movie.query.filter(Movie.movie_status == 'approved', Movie.movie_poster.isnot(None), Movie.movie_poster != '')
+              .order_by(Movie.movie_release_date.desc())
+              .limit(limit))
+    return [m.movie_poster for m in movies]
+
 ##funcion to always retrive the user id
 def get_user_byid(id):
     data = Member.query.get(id)
     return data
 
 ##home page route
+## the filters can come in the address too (e.g. /?genre=3 from a genre on a movie page)
 @app.route('/')
 def home():
-    movies = Movie.query.filter(Movie.movie_status == 'approved').all()
-    genres = Genre.query.all()
-    studio = Studio.query.all()
-    ratings = Rating.query.all()
+    selected = {
+        'year': request.args.get('year', type=int),
+        'genre': request.args.get('genre', type=int),
+        'studio': request.args.get('studio', type=int),
+    }
+    movies = browse_movies(**selected)
+    featured, featured_is_top = featured_movie()
+
+    genres = Genre.query.order_by(Genre.genre_name).all()
+    studio = Studio.query.order_by(Studio.studio_name).all()
+    release_dates = db.session.query(Movie.movie_release_date).filter(Movie.movie_status == 'approved', Movie.movie_release_date.isnot(None))
+    years = sorted({d.year for (d,) in release_dates}, reverse=True)
+    total = Movie.query.filter(Movie.movie_status == 'approved').count()
+
+    movie_ids = [m.movie_id for m in movies] + ([featured.movie_id] if featured else [])
+    scores = rating_summaries(movie_ids)
 
     ## this checks if the session is empty and allows us to use it to create a database object and access the data in the home page
     data = session.get('member_id')
@@ -58,7 +120,23 @@ def home():
     else:
         user_session = None
 
-    return render_template('user/index.html' ,user_session=user_session,movies=movies,genres=genres,studio=studio,ratings=ratings)
+    return render_template('user/index.html', user_session=user_session, movies=movies, genres=genres, studio=studio,
+                           years=years, selected=selected, total=total, scores=scores,
+                           featured=featured, featured_is_top=featured_is_top)
+
+## search movies by title
+@app.route('/search/')
+def search():
+    q = (request.args.get('q') or '').strip()
+    movies = []
+    if q:
+        ## treat % and _ as normal characters, not wildcards
+        pattern = '%' + q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
+        movies = (Movie.query.filter(Movie.movie_status == 'approved', Movie.movie_title.ilike(pattern, escape='\\'))
+                  .order_by(Movie.movie_title)
+                  .all())
+    scores = rating_summaries(m.movie_id for m in movies)
+    return render_template('user/search.html', q=q, movies=movies, scores=scores)
 
 ##this checks if the username already exists in the database and displays the options using ajax
 @app.route('/user/valusername/')
@@ -69,7 +147,7 @@ def valusername():
     if data:
         return 'Username is taken'
     else:
-        return 'Username is avaliable'
+        return 'Username is available'
 
 ##checking if the email already exists in the database
 @app.route('/user/emailval/')
@@ -80,7 +158,7 @@ def emailval():
     if data:
         return 'Email is taken'
     else:
-        return 'Email is avaliable'
+        return 'Email is available'
 
 ##user signup page
 @app.route('/user/signup/',methods=['GET','POST'])
@@ -106,11 +184,12 @@ def user_signup():
             session['member_id'] = data.member_id
             return redirect('/')
         except:
-            flash('Email or Username Taken')
+            db.session.rollback()
+            flash('That email or username is already taken.')
             return redirect('/user/signup/')
 
 
-    return render_template('user/signup.html', signup=signup)
+    return render_template('user/signup.html', signup=signup, posters=poster_wall())
 
 ##the login page
 @app.route('/user/login/', methods=['GET','POST'])
@@ -128,13 +207,13 @@ def user_login():
                 session['member_id'] = data.member_id
                 return redirect('/user/profile/')
             else:
-                flash('Incorrect Pasword')
+                flash('Incorrect password.')
                 redirect('/user/login/')
         else:
-            flash('Incorrect Email')
+            flash('No account uses that email.')
             redirect('/user/login/')
 
-    return render_template('user/login.html' ,login=login)
+    return render_template('user/login.html', login=login, posters=poster_wall())
 
 ##this logs the user out
 @app.route('/user/logout/')
@@ -149,16 +228,22 @@ def user_logout():
 @app.route('/user/profile/')
 def user_page():
     data = session.get('member_id')
-    movies = Movie.query.filter(Movie.movie_status=='approved', Movie.added_by == data)
+    movies = Movie.query.filter(Movie.movie_status=='approved', Movie.added_by == data).order_by(Movie.movie_release_date.desc()).all()
 
     if data != None:
         user_session = get_user_byid(data)
-        
+
     else:
         flash('You need to login to access this page')
         return redirect('/user/login/')
-    
-    return render_template('user/profile.html' ,user_session=user_session,moviess=movies)
+
+    pending = Movie.query.filter(Movie.movie_status == 'pending', Movie.added_by == data).count()
+    reviews = Review.query.filter(Review.member_id == data).count()
+    ratings = Rating.query.filter(Rating.member_id == data).count()
+    scores = rating_summaries(m.movie_id for m in movies)
+
+    return render_template('user/profile.html', user_session=user_session, moviess=movies, scores=scores,
+                           pending=pending, review_count=reviews, rating_count=ratings)
 
 ## route to allow users update profile
 @app.route('/user/update/profile/',methods=['GET','POST'])
@@ -174,7 +259,7 @@ def user_profile_update():
             lastname = request.form.get('last_name')
             profile_picture = request.files.get('profile_picture')
             bio = request.form.get('bio')
-            dob = request.form.get('date_of_birth')
+            dob = update.date_of_birth.data   # a date, or None when left empty
 
             ## checking if profile_picture was provided
             if profile_picture and profile_picture.filename:
@@ -220,7 +305,7 @@ def user_addmovie():
             release_date= request.form.get('release_date')
             summary = request.form.get('description')
             movie_actor = request.form.get('actor')
-            movie_producer=request.form.get('producer')
+            movie_producer=request.form.get('producer') or None   # "Not listed"
             movie_studio = request.form.get('studio')
             movie_genre = request.form.getlist('genre')
 
@@ -257,6 +342,8 @@ def user_addmovie():
 @app.route('/movie/info/<int:id>',methods=['GET','POST'])
 def movie_info(id):
     movies = Movie.query.get(id)
+    if movies is None:
+        abort(404)
     actors = MovieActor.query.filter(MovieActor.movie_id == id).all()
     genres = MovieGenre.query.filter(MovieGenre.movie_id == id).all()
 
@@ -279,8 +366,9 @@ def movie_info(id):
     else:
         user_session = None
     all_reviews = db.session.query(Review).filter(Review.movie_id == id).order_by(Review.review_date.desc()).all()
+    scores = rating_summaries(m.movie_id for m in similar_movies)
 
-    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating,rating_count=rating_count,my_rating=my_rating,moviess=similar_movies)
+    return render_template('user/movie.html',user_session=user_session,movies=movies,actors=actors,genres=genres,review=review,all_reviews=all_reviews,average_rating=average_rating,rating_count=rating_count,my_rating=my_rating,moviess=similar_movies,scores=scores)
 
 ##route is used to submit reviews
 @app.route('/ajax/movie/review/',methods=['POST'])
@@ -309,6 +397,7 @@ def submit_review():
     return jsonify({
         'review_id': user_review.review_id,
         'member_username': member.member_username,
+        'member_profile_pic': member.member_profile_pic,
         'review_content': user_review.review_content,
         'review_date': user_review.review_date.strftime('%Y-%m-%d'),
         'duplicate': duplicate
@@ -364,11 +453,11 @@ def user_update_movie(id):
             title = request.form.get('title')
             release_date= request.form.get('release_date')
             summary = request.form.get('description')
-            movie_actor = request.form.get('actor')
-            movie_producer=request.form.get('producer')
+            movie_actor = [a for a in request.form.getlist('actor') if a]   # actor ids; empty means "no change"
+            movie_producer=request.form.get('producer') or None   # "Not listed"
             movie_studio = request.form.get('studio')
             movie_genre = request.form.getlist('genre')
-           
+
 
             ##updating data in the database
             movie.movie_title = title
@@ -421,49 +510,13 @@ def user_update_movie(id):
 
 ##route for filtering movies
 @app.route('/ajax/movie/filter/', methods=['GET'])
+## the filters can be combined (e.g. 2024 + Animation). Returns the cards as HTML for the home page grid.
 def filter_movies():
-    year = request.args.get('year')
-    genre = request.args.get('genre')
-    studio = request.args.get('studio')
-
-    movies = []
-    
-    if not year and not genre and not studio:
-        movies = Movie.query.filter(Movie.movie_status =='approved').all() 
-    
-    if year:
-        movies = Movie.query.filter(extract('year', Movie.movie_release_date) == int(year),Movie.movie_status =='approved').all()
-
-    if genre:
-        movies = Movie.query.join(MovieGenre).filter(MovieGenre.genre_id == int(genre),Movie.movie_status =='approved').all()
-
-
-    if studio:
-        movies = Movie.query.filter(Movie.production_studio == int(studio),Movie.movie_status =='approved').all()
-    
-    if not movies:
-        return '<p>No movies found matching the criteria.</p>'
-    
-    movie_html = ''.join(
-    f'''
-    <div class="col-6 col-md-4 col-lg-2 mb-4">
-        <div class="card card-custom">
-            <a href="/movie/info/{movie.movie_id}"><img src="/static/uploads/poster/{movie.movie_poster}" class="card-img-top poster" alt="{movie.movie_poster}"></a>
-            <div class="card-body">
-                <a href="/movie/info/{movie.movie_id}"><p class="card-title mb-2 fs-6">{movie.movie_title}</p></a>
-                <div class="d-flex justify-content-between align-items-center mb-2 ">
-                    <p class="card-text mb-0"></p>
-                </div>
-                <div class="d-flex justify-content-center align-items-center">
-                    <a href="/movie/info/{movie.movie_id}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    ''' for movie in movies
-    )
-
-    return movie_html
+    movies = browse_movies(year=request.args.get('year', type=int),
+                           genre=request.args.get('genre', type=int),
+                           studio=request.args.get('studio', type=int))
+    scores = rating_summaries(m.movie_id for m in movies)
+    return render_template('user/_movie_grid.html', movies=movies, scores=scores, filtered=True)
     
    
 ##route to submit movie rating

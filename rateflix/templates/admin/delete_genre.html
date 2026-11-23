@@ -1,16 +1,10 @@
 {% extends 'admin/admin_base.html' %}
+{% import 'admin/_confirm.html' as c %}
+{% block admintitle %}Delete {{ genre.genre_name }}{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-        
-                    {% if genre %}
-                        <h1 class="my-4">Delete {{ genre.genre_name }}</h1>
-                    {% else %}
-                        <h1 class="my-4">Genre not found</h1>
-                    {% endif %}
-                    
-                    <h3>Are you sure you want to delete</h3>
-                    <a href="/admin/genres/" class="btn btn-primary">No</a>
-                    <a href="/confirm/delete/genre/{{ genre.genre_id  }}/" class="btn btn-danger" >Yes</a>
-                </div>
+{% set n = genre.movies|count %}
+{{ c.confirm('Delete the ' ~ genre.genre_name ~ ' genre?',
+             'It disappears from the genre filter. It can\'t be undone.',
+             '/confirm/delete/genre/' ~ genre.genre_id ~ '/', '/admin/genres/', 'Delete genre',
+             note=(n ~ (' movie is' if n == 1 else ' movies are') ~ ' tagged with it.') if n else None) }}
 {% endblock %}

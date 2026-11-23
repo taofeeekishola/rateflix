@@ -1,108 +1,114 @@
 {% extends 'admin/admin_base.html' %}
+{% block admintitle %}Movies{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Movies</h1>
-                    {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                            {% for message in messages %}
-                                <p class="alert alert-success"> {{ message }} </p>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                    <a  href="/admin/addmovie/" class="btn btn-primary">Add Movie</a>
-                   <table class="table">
-                        <thead>
-                            <tr>
-                                <td>S/N</td>
-                                <td>Title</td>
-                                <td>Description</td>
-                                <td>Release Year</td>
-                                <td>Actors</td>
-                                <td>Genres</td>
-                                <td>Producer</td>
-                                <td>Studio</td>
-                                <td>Trailer</td>
-                                <td>Poster</td>
-                                <td>Status</td>
-                                <td>Activity</td>
-                                
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if movies %}
-                                {% for movie in movies %}
-                            <tr>
-                                <td> {{ loop.index }} </td>
-                                <td>{{ movie.movie_title }}</td>
-                                <td>{{ movie.movie_description[:20] }}...</td>
-                                <td>{{ movie.movie_release_date.strftime('%Y') }}</td>
-                                <td> <a href="/admin/movie/actors/{{ movie.movie_id }}/" >{{ movie.movie_actors|count }}</a> </td>
-                                <td><a href="/admin/movie/genre/{{ movie.movie_id }}/" > {{ movie.genres|count }}</a></td>
-                                <td> {{ movie.producer.producer_name }} </td>
-                                <td> {{ movie.studio.studio_name }} </td>
-                                <td>
-                                    {% if movie.movie_trailer %}
-                                        Yes
-                                    {% else %}
-                                        No
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if movie.movie_poster %}
-                                        Yes
-                                    {% else %}
-                                        No
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <select class="status-dropdown mb-2" data-movie-id="{{ movie.movie_id }}">
-                                        <option value="pending" {% if movie.movie_status == 'pending' %}selected{% endif %}>Pending</option>
-                                        <option value="approved" {% if movie.movie_status == 'approved' %}selected{% endif %}>Approved</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <a  href="/admin/movie/update/{{ movie.movie_id }}/" class="btn btn-primary">Update</a>
-                                    <button class="btn btn-danger">Delete</button>
-                                </td>
-                                
-                            </tr>
-                                {% endfor %}
-                            {% endif %}
-                        </tbody>
-                   </table>
-                   
-                </div>
+<div class="rf-admin-head">
+    <div>
+        <h1>Movies</h1>
+        <p>{{ movies|length }} {{ 'movie' if movies|length == 1 else 'movies' }}. Waiting for approval are listed first. Changing the status saves straight away.</p>
+    </div>
+    <a href="/admin/addmovie/" class="btn btn-primary"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Add a movie</a>
+</div>
+
+<div class="rf-panel">
+    {% if movies %}
+    <div class="rf-table-wrap">
+        <table class="table rf-table rf-table--stack">
+            <thead>
+                <tr>
+                    <th scope="col">Movie</th>
+                    <th scope="col">Genres</th>
+                    <th scope="col">Cast</th>
+                    <th scope="col" class="d-none d-xl-table-cell">Studio</th>
+                    <th scope="col">Media</th>
+                    <th scope="col">Status</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movie in movies %}
+                <tr>
+                    <td class="rf-td-main">
+                        <div class="rf-cell-movie">
+                            {% if movie.movie_poster %}<img src="/static/uploads/poster/{{ movie.movie_poster }}" alt="">{% else %}<span class="rf-thumb-ph"><i class="fa-solid fa-film" aria-hidden="true"></i></span>{% endif %}
+                            <div>
+                                <strong>{{ movie.movie_title }}</strong>
+                                <span>{{ movie.movie_release_date.year if movie.movie_release_date else 'No release date' }}{% if movie.added_by_member %}, added by @{{ movie.added_by_member.member_username }}{% endif %}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Genres">
+                        <a class="rf-count" href="/admin/movie/genre/{{ movie.movie_id }}/">{{ movie.genres|count }} {{ 'genre' if movie.genres|count == 1 else 'genres' }}</a>
+                    </td>
+                    <td data-label="Cast">
+                        <a class="rf-count" href="/admin/movie/actors/{{ movie.movie_id }}/">{{ movie.movie_actors|count }} {{ 'actor' if movie.movie_actors|count == 1 else 'actors' }}</a>
+                    </td>
+                    <td class="d-none d-xl-table-cell" data-label="Studio">{{ movie.studio.studio_name if movie.studio else 'Not listed' }}</td>
+                    <td data-label="Media">
+                        <span class="rf-media-flags">
+                            <span class="rf-flag{% if movie.movie_poster %} is-on{% endif %}" title="{{ 'Has a poster' if movie.movie_poster else 'No poster' }}"><i class="fa-solid {{ 'fa-check' if movie.movie_poster else 'fa-xmark' }}" aria-hidden="true"></i>Poster</span>
+                            <span class="rf-flag{% if movie.movie_trailer %} is-on{% endif %}" title="{{ 'Has a trailer' if movie.movie_trailer else 'No trailer' }}"><i class="fa-solid {{ 'fa-check' if movie.movie_trailer else 'fa-xmark' }}" aria-hidden="true"></i>Trailer</span>
+                        </span>
+                    </td>
+                    <td data-label="Status">
+                        <div>
+                            <label class="visually-hidden" for="status-{{ movie.movie_id }}">Status of {{ movie.movie_title }}</label>
+                            <select class="form-select status-dropdown" id="status-{{ movie.movie_id }}" data-movie-id="{{ movie.movie_id }}" data-status="{{ movie.movie_status }}">
+                                <option value="pending" {% if movie.movie_status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if movie.movie_status == 'approved' %}selected{% endif %}>Approved</option>
+                            </select>
+                            <span class="rf-saved" aria-live="polite"></span>
+                        </div>
+                    </td>
+                    <td class="rf-actions-cell">
+                        <a href="/movie/info/{{ movie.movie_id }}" class="btn btn-quiet btn-icon btn-sm" title="View on the site" aria-label="View {{ movie.movie_title }} on the site"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>
+                        <a href="/admin/movie/update/{{ movie.movie_id }}/" class="btn btn-quiet btn-icon btn-sm" title="Edit" aria-label="Edit {{ movie.movie_title }}"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="rf-panel__body">
+        <div class="rf-empty border-0">
+            <i class="fa-solid fa-film" aria-hidden="true"></i>
+            <h3>No movies yet</h3>
+            <p>Add the first movie, or wait for members to send some in.</p>
+            <a class="btn btn-primary" href="/admin/addmovie/">Add a movie</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
-{% block adminscript %} 
-    <script>
-      $(document).ready(function(){
-        $('.status-dropdown').change(function(){
-            var newStatus = $(this).val();
-            var movieId = $(this).data('movie-id');
-            var csrfToken = "{{ csrf_token() }}"; // CSRF token if needed
+
+{% block adminscript %}
+<script>
+    $(document).ready(function () {
+        var csrfToken = "{{ csrf_token() }}";
+
+        // changing the status saves it straight away
+        $('.status-dropdown').change(function () {
+            var $select = $(this);
+            var $saved = $select.siblings('.rf-saved');
+            var previous = $select.attr('data-status');
+            var newStatus = $select.val();
+            $saved.text('Saving...');
 
             $.ajax({
                 url: '/admin/update_movie_status/',
                 type: 'POST',
-                data: {
-                    status: newStatus,
-                    movieid: movieId,
-                    csrf_token: csrfToken
+                data: { status: newStatus, movieid: $select.data('movie-id'), csrf_token: csrfToken },
+                success: function () {
+                    $select.attr('data-status', newStatus);
+                    $saved.text(newStatus === 'approved' ? 'Approved, now live' : 'Saved as pending');
                 },
-                success: function(){
-                    // Optionally log or do something after successful update
-                    console.log('Movie status updated successfully');
-                },
-                error: function(err){
-                    // Handle error (e.g., if movie not found)
-                    console.log('Error updating movie status', err);
-                    alert('Failed to update movie status.');
+                error: function () {
+                    $select.val(previous);
+                    $saved.text('');
+                    alert('The status could not be changed. Refresh the page and try again.');
                 }
             });
         });
     });
-
-
-    </script>
+</script>
 {% endblock %}

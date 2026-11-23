@@ -1,52 +1,66 @@
 {% extends 'base.html' %}
+{% block title %}Your submissions | RateFlix{% endblock %}
 
 {% block content %}
-    <div class="row mt-5">
-        <div class="col-md-6 offset-3">
-            <h1>View Movies</h1>
-             {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <p class="alert alert-danger"> {{ message }} </p>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            
-            <table class="table table-stripped">
-                <thead>
-                    <tr>
-                        <td>S/N</td>
-                        <td>Name</td>
-                        <td>Status</td>
-                        <td>Activity</td>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {% for m in movie  %}
-                        <tr>
-                            <td> {{ loop.index }} </td>
-                            <td> {{ m.movie_title }} </td>
-                            <td>
-                                {% if m.movie_status == 'pending' %}
-                                    <button class="btn btn-warning ">Pending</button>
-                                {% elif m.movie_status == 'approved' %}
-                                    <button class="btn btn-success " >Approved</button>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if m.movie_status == 'pending' %}
-                                    <a  href="/user/movie/update/{{ m.movie_id }}/" class="btn btn-primary">Update</a>
-                                {% elif m.movie_status == 'approved' %}
-                                    <button class="btn btn-success disabled">Approved</button>
-                                {% endif %}
-                             </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        
+{% set submissions = movie.all() %}
+<section class="rf-wrap rf-section" style="max-width: 960px;">
+    <a class="rf-back" href="/user/profile/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Back to your profile</a>
+    <div class="rf-admin-head">
+        <div>
+            <h1>Your submissions</h1>
+            <p>Movies you added. Pending ones can still be edited.</p>
         </div>
-       
+        <a href="/user/add_movie/" class="btn btn-primary"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Add a movie</a>
     </div>
-{% endblock content %}
+
+    {% if submissions %}
+    <div class="rf-panel">
+        <table class="table rf-table rf-table--stack">
+            <thead>
+                <tr>
+                    <th scope="col">Movie</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in submissions %}
+                <tr>
+                    <td class="rf-td-main">
+                        <div class="rf-cell-movie">
+                            {% if m.movie_poster %}<img src="/static/uploads/poster/{{ m.movie_poster }}" alt="">{% else %}<span class="rf-thumb-ph"><i class="fa-solid fa-film" aria-hidden="true"></i></span>{% endif %}
+                            <div>
+                                <strong>{{ m.movie_title }}</strong>
+                                <span>{{ m.movie_release_date.year if m.movie_release_date else 'No release date' }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Status">
+                        {% if m.movie_status == 'approved' %}
+                            <span class="rf-status rf-status--approved">Approved</span>
+                        {% else %}
+                            <span class="rf-status rf-status--pending">Waiting for approval</span>
+                        {% endif %}
+                    </td>
+                    <td class="rf-actions-cell">
+                        {% if m.movie_status == 'pending' %}
+                            <a href="/user/movie/update/{{ m.movie_id }}/" class="btn btn-quiet btn-sm"><i class="fa-solid fa-pen me-1" aria-hidden="true"></i>Edit</a>
+                        {% else %}
+                            <a href="/movie/info/{{ m.movie_id }}" class="btn btn-quiet btn-sm">View</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="rf-empty">
+        <i class="fa-solid fa-clapperboard" aria-hidden="true"></i>
+        <h3>You haven't added any movies</h3>
+        <p>Add a movie that's missing from RateFlix and it will show up here.</p>
+        <a class="btn btn-primary" href="/user/add_movie/">Add a movie</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

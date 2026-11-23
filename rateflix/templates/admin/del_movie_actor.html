@@ -1,17 +1,9 @@
 {% extends 'admin/admin_base.html' %}
+{% import 'admin/_confirm.html' as c %}
+{% block admintitle %}Remove an actor{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-
-                    {% if actors %}
-                        <h1 class="my-4">Delete {{ actors.actor.actor_name }}</h1>
-                    {% else %}
-                        <h1 class="my-4">Actor not found</h1>
-                    {% endif %}
-                    
-                    
-                    <h3>Are you sure you want to delete</h3>
-                    <a href="/admin/movie/actors/{{ movie.movie_id }}/" class="btn btn-primary">No</a>
-                    <a href="/admin/delactor/confirm/{{ movie.movie_id }}/{{ actors.actor_id }}" class="btn btn-danger" >Yes</a>
-                </div>
+{{ c.confirm('Remove ' ~ actors.actor.actor_name ~ ' from ' ~ movie.movie_title ~ '?',
+             'They come off this movie\'s cast. The actor stays on RateFlix.',
+             '/admin/delactor/confirm/' ~ movie.movie_id ~ '/' ~ actors.actor_id,
+             '/admin/movie/actors/' ~ movie.movie_id ~ '/', 'Remove from cast') }}
 {% endblock %}

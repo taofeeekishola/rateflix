@@ -1,0 +1,93 @@
+{# The movie form fields, shared by the add and edit pages (member and admin).
+   Import with {% import '_movie_form.html' as mf %}.
+   movie: the Movie being edited, or None when adding. uploads: show poster and trailer fields (admin). #}
+{% import '_macros.html' as ui %}
+
+{% macro movie_fields(form, actors, producers, studios, genres, movie=None, uploads=False) %}
+{% set current_genre_ids = movie.genres|map(attribute='genre_id')|list if movie else [] %}
+{% set current_actor_ids = movie.movie_actors|map(attribute='actor_id')|list if movie else [] %}
+{% set picked_producer = request.form.get('producer') if request.method == 'POST' else (movie.producer_id if movie else '') %}
+{% set picked_studio = request.form.get('studio') if request.method == 'POST' else (movie.production_studio if movie else '') %}
+{% set picked_genres = request.form.getlist('genre')|map('int')|list %}
+
+<div class="rf-form-grid">
+    {% if movie %}
+        {{ ui.field(form.title, label='Title', required=True, wrap='rf-span-2', value=form.title.data or movie.movie_title) }}
+        {{ ui.field(form.release_date, label='Release date', required=True, value=form.release_date.data or movie.movie_release_date or '') }}
+    {% else %}
+        {{ ui.field(form.title, label='Title', required=True, wrap='rf-span-2') }}
+        {{ ui.field(form.release_date, label='Release date', required=True) }}
+    {% endif %}
+
+    <div class="rf-field{% if form.studio.errors %} is-invalid{% endif %}">
+        <label class="rf-label" for="studio">Studio<span class="rf-req" aria-hidden="true">*</span></label>
+        <select name="studio" id="studio" class="form-select">
+            <option value="">Choose a studio</option>
+            {% for s in studios %}
+                <option value="{{ s.studio_id }}"{% if picked_studio|string == s.studio_id|string %} selected{% endif %}>{{ s.studio_name }}</option>
+            {% endfor %}
+        </select>
+        {{ ui.errors(form.studio) }}
+    </div>
+
+    <div class="rf-field">
+        <label class="rf-label" for="producer">Producer</label>
+        <select name="producer" id="producer" class="form-select">
+            <option value="">Not listed</option>
+            {% for p in producers %}
+                <option value="{{ p.producer_id }}"{% if picked_producer|string == p.producer_id|string %} selected{% endif %}>{{ p.producer_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="rf-field">
+        <label class="rf-label" for="actor">{{ 'Add a cast member' if movie else 'Lead actor' }}</label>
+        <select name="actor" id="actor" class="form-select">
+            <option value="">{{ 'No change' if movie else 'Not listed' }}</option>
+            {% for a in actors if a.actor_id not in current_actor_ids %}
+                <option value="{{ a.actor_id }}"{% if request.form.get('actor')|string == a.actor_id|string %} selected{% endif %}>{{ a.actor_name }}</option>
+            {% endfor %}
+        </select>
+        {% if movie and movie.movie_actors %}
+            <p class="rf-hint">In the cast: {{ movie.movie_actors|map(attribute='actor.actor_name')|join(', ') }}</p>
+        {% endif %}
+    </div>
+
+    <div class="rf-field rf-span-2">
+        <label class="rf-label" for="description">Plot summary</label>
+        <textarea class="form-control" id="description" name="description" rows="5" placeholder="What is the movie about? Keep spoilers out.">{{ form.description.data if form.description.data is not none else (movie.movie_description or '' if movie else '') }}</textarea>
+    </div>
+
+    <div class="rf-field rf-span-2">
+        <span class="rf-label" id="genre-label">{{ 'Add genres' if movie else 'Genres' }}</span>
+        {% if movie and movie.genres %}
+            <p class="rf-hint mt-0 mb-2">Already tagged: {{ movie.genres|map(attribute='genre.genre_name')|join(', ') }}</p>
+        {% endif %}
+        <div role="group" aria-labelledby="genre-label">
+            {{ ui.genre_chips(genres, selected=picked_genres, hide=current_genre_ids) }}
+        </div>
+    </div>
+
+    {% if uploads %}
+    <div class="rf-field{% if form.poster.errors %} is-invalid{% endif %}">
+        <label class="rf-label" for="poster">Poster</label>
+        {% if movie and movie.movie_poster %}
+            <div class="rf-current-file"><img src="/static/uploads/poster/{{ movie.movie_poster }}" alt="">Current poster. Choose a file to replace it.</div>
+        {% endif %}
+        {{ form.poster(class_='form-control', accept='.jpg,.png') }}
+        <p class="rf-hint">JPG or PNG. A tall (2:3) image looks best.</p>
+        {{ ui.errors(form.poster) }}
+    </div>
+
+    <div class="rf-field{% if form.trailer.errors %} is-invalid{% endif %}">
+        <label class="rf-label" for="trailer">Trailer</label>
+        {% if movie and movie.movie_trailer %}
+            <div class="rf-current-file"><i class="fa-solid fa-circle-play" aria-hidden="true"></i>A trailer is uploaded. Choose a file to replace it.</div>
+        {% endif %}
+        {{ form.trailer(class_='form-control', accept='.mp4') }}
+        <p class="rf-hint">MP4 video.</p>
+        {{ ui.errors(form.trailer) }}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

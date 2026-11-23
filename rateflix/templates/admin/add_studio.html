@@ -1,21 +1,6 @@
 {% extends 'admin/admin_base.html' %}
+{% import 'admin/_name_form.html' as nf %}
+{% block admintitle %}Add a studio{% endblock %}
 {% block admincontent %}
-    <!-- Main Content -->
-                <div class="col-md-9 ms-sm-auto col-lg-10 px-4">
-                    <h1 class="my-4">Add Studio</h1>
-                
-                    <form method="post" action="/admin/studio/add/" novalidate>
-                        {{ studio.csrf_token }}
-
-                        {{ studio.name(class_='form-control mb-3', placeholder='Studio Name') }}
-                        {% if studio.name.errors %}
-                            {% for error in studio.name.errors %}
-                                <p class="text-danger" > {{ error }} </p>
-                            {% endfor %}
-                        {% endif %}
-
-                        {{ studio.add(class_='btn btn-primary') }}
-
-                    </form>
-                </div>
+{{ nf.name_form(studio, '/admin/studios/', 'Studios', 'Add a studio', 'It appears in the studio filter on the home page.', 'Studio name', 'Add studio') }}
 {% endblock %}

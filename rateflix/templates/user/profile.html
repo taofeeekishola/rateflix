@@ -1,250 +1,49 @@
 {% extends 'base.html' %}
+{% import '_macros.html' as ui %}
+{% block title %}{{ user_session.member_username }} | RateFlix{% endblock %}
+
 {% block content %}
-        <!--About User-->
-        <div class="row mt-3 align-items-center">
-            <div class="col-md-6 text-center">
-              {% if user_session.member_profile_pic == None %}
-                <img src="/static/Images/default.jfif" alt="profile image" class='img-fluid'>
-              {% else %}
-                <img src="/static/uploads/profile_pic/{{ user_session.member_profile_pic }}" alt="{{ user_session.member_username }} profile_pic" class='img-fluid profile_pic'>
-              {% endif %}
-              <p class="d-block"> {{ user_session.member_username }} </p>
-              <a  href="/user/update/profile/" class="btn btn-primary d-block d-lg-inline mx-auto mx-lg-2">Edit Profile</a>
-            </div>
-            <div class="col-md-6">
-              <div class="row">
-                {% with messages = get_flashed_messages() %}
-                  {% if messages %}
-                      {% for message in messages %}
-                          <p class="alert alert-danger"> {{ message }} </p>
-                      {% endfor %}
-                  {% endif %}
-                {% endwith %}
-                <div class="col-md-4 stat">
-                    <div class="stat-number">Num of movies added</div>
-                    <div class="text-center"> {{ user_session.movies|count }} </div>
-                </div>
-                <div class="col-md-4 stat">
-                    <div> <a href="/user/movieadded/" class="btn btn-primary">Movies Added</a></div>
-                </div>
-                <div class="col-md-4 stat">
-                    <a href="/user/add_movie/" class="btn btn-primary">Add a Movie</a>
-                </div>
-              </div>
-            </div>
-        </div>
-
-        
-        {#
-        <!--User watchlist header-->
-        <div class="row mt-5">
-            <div class="col-md-6">
-                 <h3 class="sub-heading">My Watchlist</h3>
-            </div>
-        </div>
-
-        <!--User watchlist-->
-        <div class="row">
-            <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/hodg.jpg" class="card-img-top" alt="House of the dragons"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">House Of The Dragon</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">10/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-primary btn-sm added"><i class="fa-solid fa-check"></i> Added</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/inside.jpg" class="card-img-top" alt="Inside out"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Inside Out 2</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-               <buttton class="btn btn-primary btn-sm added"><i class="fa-solid fa-check"></i> Added</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/aco.jpg" class="card-img-top" alt="The Acolyte"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">The Acolyte</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-primary btn-sm added"><i class="fa-solid fa-check"></i> Added</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        </div>#}
-
-        <!--User reviews header-->
-        <div class="row mt-5">
-            <div class="col-md-6">
-                 <h3 class="sub-heading">Added Movies</h3>
-            </div>
-        </div>
-
-        <!--User reviews-->
-        <div class="row">
-          {% if moviess %}
-          {% for movie in moviess %}
-            <div class="col-6 col-md-4 col-lg-2 mb-4">
-              <div class="card card-custom">
-                {% if movie.movie_poster == "" or movie.movie_poster == None %}
-                  <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top " alt="Movie Poster"></a>
-                {% else %}
-                  <a href="/movie/info/{{ movie.movie_id }}"><img src="/static/uploads/poster/{{ movie.movie_poster }}" class="card-img-top poster" alt="{{ movie.movie_poster }}"></a>
+<section class="rf-wrap rf-section">
+    <div class="rf-panel rf-panel__body">
+        <div class="rf-profile-head">
+            {{ ui.avatar(user_session) }}
+            <div>
+                <h1>{{ user_session.member_firstname }} {{ user_session.member_lastname }}</h1>
+                <p class="rf-muted">@{{ user_session.member_username }}{% if user_session.member_join_date %}, member since {{ user_session.member_join_date.strftime('%B %Y') }}{% endif %}</p>
+                {% if user_session.member_bio and user_session.member_bio.strip() %}
+                    <p class="rf-profile-bio">{{ user_session.member_bio }}</p>
                 {% endif %}
-                <div class="card-body">
-                  <a href="/movie/info/{{ movie.movie_id }}"><p class="card-title mb-2 fs-6">{{ movie.movie_title }}</p></a>
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                  
-                  </div>
-                  <!-- Align the buttons side by side with equal width and reduced height -->
-                  <div class="d-flex justify-content-center align-items-center">
-                    <a href="/movie/info/{{ movie.movie_id }}" class="btn btn-primary btn-sm flex-fill me-2 custom-btn"><i class="fa-solid fa-play"></i> Trailer</a>
-                  </div>
-                </div>
-              </div>
+                <p class="rf-inline-stats">
+                    <span><strong>{{ moviess|length }}</strong> {{ 'movie' if moviess|length == 1 else 'movies' }} added</span>
+                    {% if pending %}<span><strong>{{ pending }}</strong> waiting for approval</span>{% endif %}
+                    <span><strong>{{ rating_count }}</strong> {{ 'rating' if rating_count == 1 else 'ratings' }}</span>
+                    <span><strong>{{ review_count }}</strong> {{ 'review' if review_count == 1 else 'reviews' }}</span>
+                </p>
             </div>
-         {% endfor %}
-        {% endif %}
-        </div>
-
-       
-        {#
-        <!--Recommend Header-->
-        <div class="row mt-5">
-            <div class="col-md-6">
-                 <h3 class="sub-heading">Recommeded For You</h3>
+            <div class="rf-actions">
+                <a href="/user/update/profile/" class="btn btn-quiet"><i class="fa-solid fa-pen me-2" aria-hidden="true"></i>Edit profile</a>
+                <a href="/user/add_movie/" class="btn btn-primary"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Add a movie</a>
             </div>
         </div>
+    </div>
+</section>
 
-        <!--Recommeded-->
-        <div class="row">
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/dispicableme.jpg" class="card-img-top" alt="Despicable Me 4"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Despicable Me 4</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">7/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
+<section class="rf-wrap rf-section" aria-labelledby="added-title">
+    <div class="rf-section__head">
+        <h2 id="added-title">Movies you added</h2>
+        <a href="/user/movieadded/" class="btn btn-link px-0">See all your submissions</a>
+    </div>
+    <div class="rf-grid">
+        {% for movie in moviess %}
+            {{ ui.movie_card(movie, scores.get(movie.movie_id)) }}
+        {% else %}
+            <div class="rf-empty">
+                <i class="fa-solid fa-clapperboard" aria-hidden="true"></i>
+                <h3>{{ 'Nothing approved yet' if pending else 'You haven\'t added any movies' }}</h3>
+                <p>{{ 'Your movies show here once an admin approves them.' if pending else 'Add a movie that\'s missing from RateFlix. It shows here once an admin approves it.' }}</p>
+                {% if not pending %}<a class="btn btn-primary" href="/user/add_movie/">Add a movie</a>{% endif %}
             </div>
-          </div>
-        </div>
-     
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/badboys.jpg" class="card-img-top" alt="Badboys"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Bad Boys </p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">5/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/fly.jpg" class="card-img-top" alt="Fly me to the moon"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Fly Me To The Moon</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">7/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/inside.jpg" class="card-img-top" alt="Inside out"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Inside Out 2</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">9/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/longlegs.jpg" class="card-img-top" alt="Longlegs"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">Longlegs</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">4/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-2 mb-4">
-          <div class="card card-custom">
-            <a href="#"><img src="/static/Images/quietplace.jpg" class="card-img-top" alt="A quiet Place day 1"></a>
-            <div class="card-body">
-              <a href="#"><p class="card-title mb-2">A Quiet Place Day One</p></a>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <p class="card-text mb-0">7/10<i class="fa-solid fa-star"></i></p>
-                <i class="fa-solid fa-star"></i>
-              </div>
-              <div class="d-flex flex-column align-items-center">
-                <a href="#" class="btn btn-primary mb-2 btn-sm"><i class="fa-solid fa-play"></i> Trailer</a>
-                <buttton class="btn btn-outline-primary btn-sm movies"><i class="fa-solid fa-plus"></i> Watchlist</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        </div> #}
-
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}
